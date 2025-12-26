@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { supabase, DatabaseProject } from '../utils/supabase';
+import { supabase } from '../utils/supabase';
+import type { DatabaseProject } from '../utils/supabase';
 import { LogOut, Plus, Trash2, Image as ImageIcon, Check, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { portfolioData } from '../data';
@@ -71,7 +72,7 @@ export default function AdminPage() {
     const fileName = `${prefix}_${Math.random().toString(36).substring(2)}.${fileExt}`;
     const filePath = `${fileName}`;
 
-    const { error: uploadError, data } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('portfolio')
       .upload(filePath, file);
 

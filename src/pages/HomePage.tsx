@@ -22,7 +22,8 @@ import { Globe, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ContactForm from '../components/ContactForm';
 import CaseStudyCard from '../components/CaseStudyCard';
-import { supabase, DatabaseProject } from '../utils/supabase';
+import { supabase } from '../utils/supabase';
+import type { DatabaseProject } from '../utils/supabase';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
