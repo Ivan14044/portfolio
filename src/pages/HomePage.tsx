@@ -43,18 +43,22 @@ export default function HomePage() {
   // Загрузка проектов из Supabase
   useEffect(() => {
     async function fetchProjects() {
+      console.log('🔄 Попытка загрузки проектов из Supabase...');
       try {
         const { data, error } = await supabase
           .from('projects')
           .select('*')
           .order('created_at', { ascending: false });
         
-        if (error) throw error;
-        if (data && data.length > 0) {
-          setDbProjects(data);
+        if (error) {
+          console.error('❌ Ошибка Supabase при загрузке:', error);
+          throw error;
         }
+        
+        console.log('✅ Данные успешно получены. Количество проектов из БД:', data?.length || 0);
+        setDbProjects(data || []);
       } catch (err) {
-        console.warn('Could not fetch projects from Supabase, using local data:', err);
+        console.error('⚠️ Критическая ошибка при загрузке данных:', err);
       } finally {
         setIsLoadingProjects(false);
       }
@@ -64,16 +68,17 @@ export default function HomePage() {
 
   // Объединенный список проектов: динамические из БД + статические из файла
   const displayProjects = [
-    ...dbProjects.map(p => {
+    ...(dbProjects || []).map(p => {
+      // Логика выбора языка для каждого поля
       const getLocalizedField = (uk: any, ru: any, en: any, fallback?: any) => {
-        if (language === 'uk') return uk || ru || en || fallback;
-        if (language === 'ru') return ru || uk || en || fallback;
-        return en || ru || uk || fallback;
+        if (language === 'uk') return uk || ru || en || fallback || '';
+        if (language === 'ru') return ru || uk || en || fallback || '';
+        return en || ru || uk || fallback || '';
       };
 
       return {
         title: getLocalizedField(p.title_uk, p.title_ru, p.title_en, p.title),
-        client: p.client,
+        client: p.client || '',
         category: getLocalizedField(p.category_uk, p.category_ru, p.category_en, p.category),
         description: getLocalizedField(p.description_uk, p.description_ru, p.description_en, p.description),
         services: getLocalizedField(p.services_uk, p.services_ru, p.services_en, p.services) || [],
@@ -83,6 +88,8 @@ export default function HomePage() {
     }),
     ...portfolioData.portfolio
   ];
+
+  console.log('📊 Итоговое количество проектов для отображения:', displayProjects.length);
 
   // Маппинг секций к изображениям
   const sectionImages: Record<string, string> = {
