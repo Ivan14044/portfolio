@@ -62,27 +62,27 @@ export default function HomePage() {
     fetchProjects();
   }, []);
 
-  // Объединенный список проектов: из БД или из локального файла
-  const displayProjects = dbProjects.length > 0 
-    ? dbProjects.map(p => {
-        // Логика выбора языка для каждого поля
-        const getLocalizedField = (uk: any, ru: any, en: any, fallback?: any) => {
-          if (language === 'uk') return uk || ru || en || fallback;
-          if (language === 'ru') return ru || uk || en || fallback;
-          return en || ru || uk || fallback;
-        };
+  // Объединенный список проектов: динамические из БД + статические из файла
+  const displayProjects = [
+    ...dbProjects.map(p => {
+      const getLocalizedField = (uk: any, ru: any, en: any, fallback?: any) => {
+        if (language === 'uk') return uk || ru || en || fallback;
+        if (language === 'ru') return ru || uk || en || fallback;
+        return en || ru || uk || fallback;
+      };
 
-        return {
-          title: getLocalizedField(p.title_uk, p.title_ru, p.title_en, p.title),
-          client: p.client,
-          category: getLocalizedField(p.category_uk, p.category_ru, p.category_en, p.category),
-          description: getLocalizedField(p.description_uk, p.description_ru, p.description_en, p.description),
-          services: getLocalizedField(p.services_uk, p.services_ru, p.services_en, p.services) || [],
-          beforeImage: p.before_image,
-          afterImage: p.after_image,
-        };
-      })
-    : portfolioData.portfolio;
+      return {
+        title: getLocalizedField(p.title_uk, p.title_ru, p.title_en, p.title),
+        client: p.client,
+        category: getLocalizedField(p.category_uk, p.category_ru, p.category_en, p.category),
+        description: getLocalizedField(p.description_uk, p.description_ru, p.description_en, p.description),
+        services: getLocalizedField(p.services_uk, p.services_ru, p.services_en, p.services) || [],
+        beforeImage: p.before_image,
+        afterImage: p.after_image,
+      };
+    }),
+    ...portfolioData.portfolio
+  ];
 
   // Маппинг секций к изображениям
   const sectionImages: Record<string, string> = {

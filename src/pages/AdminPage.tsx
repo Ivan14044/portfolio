@@ -124,6 +124,7 @@ export default function AdminPage() {
 
       if (insertError) throw insertError;
 
+      alert('Проект успешно сохранен и опубликован!');
       setIsAdding(false);
       setNewProject({ 
         title_uk: '', title_ru: '', title_en: '',
