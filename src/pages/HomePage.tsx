@@ -11,6 +11,7 @@ import {
   Instagram,
   Linkedin,
   Send,
+  Loader2,
 } from 'lucide-react';
 import { portfolioData } from '../data';
 import { clsx, type ClassValue } from 'clsx';
@@ -21,6 +22,7 @@ import { Globe, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ContactForm from '../components/ContactForm';
 import CaseStudyCard from '../components/CaseStudyCard';
+import { supabase, DatabaseProject } from '../utils/supabase';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -32,6 +34,45 @@ export default function HomePage() {
   const [activeImage, setActiveImage] = useState('image_1');
   const [blurLevel, setBlurLevel] = useState(0);
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
+  
+  // Состояние для динамических проектов из Supabase
+  const [dbProjects, setDbProjects] = useState<DatabaseProject[]>([]);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(true);
+
+  // Загрузка проектов из Supabase
+  useEffect(() => {
+    async function fetchProjects() {
+      try {
+        const { data, error } = await supabase
+          .from('projects')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        if (data && data.length > 0) {
+          setDbProjects(data);
+        }
+      } catch (err) {
+        console.warn('Could not fetch projects from Supabase, using local data:', err);
+      } finally {
+        setIsLoadingProjects(false);
+      }
+    }
+    fetchProjects();
+  }, []);
+
+  // Объединенный список проектов: из БД или из локального файла
+  const displayProjects = dbProjects.length > 0 
+    ? dbProjects.map(p => ({
+        title: p.title,
+        client: p.client,
+        category: p.category,
+        description: p.description,
+        services: p.services,
+        beforeImage: p.before_image,
+        afterImage: p.after_image,
+      }))
+    : portfolioData.portfolio;
 
   // Маппинг секций к изображениям
   const sectionImages: Record<string, string> = {
@@ -325,12 +366,19 @@ export default function HomePage() {
           </motion.h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {portfolioData.portfolio.map((caseStudy, cj) => (
-              <CaseStudyCard 
-                key={cj} 
-                caseStudy={caseStudy}
-              />
-            ))}
+            {isLoadingProjects ? (
+              <div className="col-span-full py-20 flex flex-col items-center justify-center text-white/20">
+                <Loader2 className="animate-spin mb-4" size={40} />
+                <p>Загрузка проектов...</p>
+              </div>
+            ) : (
+              displayProjects.map((caseStudy, cj) => (
+                <CaseStudyCard 
+                  key={cj} 
+                  caseStudy={caseStudy}
+                />
+              ))
+            )}
           </div>
         </section>
 

@@ -1,0 +1,432 @@
+import { useState, useEffect } from 'react';
+import { supabase, DatabaseProject } from '../utils/supabase';
+import { LogOut, Plus, Trash2, Image as ImageIcon, Check, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { portfolioData } from '../data';
+
+export default function AdminPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [projects, setProjects] = useState<DatabaseProject[]>([]);
+  const [isAdding, setIsAdding] = useState(false);
+
+  // Состояние для новой формы проекта
+  const [newProject, setNewProject] = useState({
+    title: '',
+    client: '',
+    category: '',
+    description: '',
+    services: '',
+  });
+  const [beforeFile, setBeforeFile] = useState<File | null>(null);
+  const [afterFile, setAfterFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    const auth = localStorage.getItem('admin_auth');
+    if (auth === 'true') {
+      setIsAuthenticated(true);
+      fetchProjects();
+    }
+  }, []);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Пароль берется из .env, fallback на более сложный пароль для безопасности
+    const adminPass = import.meta.env.VITE_ADMIN_PASSWORD || 'DariaPortfolio_Secure_2025';
+    if (password === adminPass) {
+      setIsAuthenticated(true);
+      localStorage.setItem('admin_auth', 'true');
+      setError('');
+      fetchProjects();
+    } else {
+      setError('Неверный пароль');
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('admin_auth');
+  };
+
+  const fetchProjects = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching projects:', error);
+    } else {
+      setProjects(data || []);
+    }
+    setLoading(false);
+  };
+
+  const handleUpload = async (file: File, prefix: string) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${prefix}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { error: uploadError, data } = await supabase.storage
+      .from('portfolio')
+      .upload(filePath, file);
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('portfolio')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!beforeFile || !afterFile) {
+      setError('Пожалуйста, выберите оба изображения (До и После)');
+      return;
+    }
+
+    setUploading(true);
+    setError('');
+
+    try {
+      const beforeUrl = await handleUpload(beforeFile, 'before');
+      const afterUrl = await handleUpload(afterFile, 'after');
+
+      const { error: insertError } = await supabase
+        .from('projects')
+        .insert([{
+          title: newProject.title,
+          client: newProject.client,
+          category: newProject.category,
+          description: newProject.description,
+          services: newProject.services.split(',').map(s => s.trim()),
+          before_image: beforeUrl,
+          after_image: afterUrl,
+        }]);
+
+      if (insertError) throw insertError;
+
+      setIsAdding(false);
+      setNewProject({ title: '', client: '', category: '', description: '', services: '' });
+      setBeforeFile(null);
+      setAfterFile(null);
+      fetchProjects();
+    } catch (err: any) {
+      setError(err.message || 'Ошибка при сохранении проекта');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Вы уверены, что хотите удалить этот проект?')) return;
+
+    const { error } = await supabase
+      .from('projects')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      alert('Ошибка при удалении');
+    } else {
+      fetchProjects();
+    }
+  };
+
+  const migrateData = async () => {
+    if (!confirm('Это загрузит все проекты из data.ts в базу данных. Продолжить?')) return;
+    
+    setLoading(true);
+    try {
+      const projectsToInsert = portfolioData.portfolio.map(p => ({
+        title: p.title,
+        client: p.client,
+        category: p.category,
+        description: p.description,
+        services: p.services,
+        before_image: p.beforeImage,
+        after_image: p.afterImage,
+      }));
+
+      const { error } = await supabase.from('projects').insert(projectsToInsert);
+      if (error) throw error;
+      
+      alert('Миграция успешна!');
+      fetchProjects();
+    } catch (err: any) {
+      alert('Ошибка миграции: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center p-4 font-sans">
+        <div className="w-full max-w-md bg-[#141414] border border-white/10 rounded-2xl p-8 shadow-2xl">
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-16 h-16 bg-[#FFB800] rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-[#FFB800]/20">
+              <LogOut className="text-black w-8 h-8 rotate-180" />
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-2">Вход в панель</h1>
+            <p className="text-white/40 text-sm">Введите пароль администратора</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Пароль"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-[#FFB800]/50 transition-colors"
+              />
+            </div>
+            {error && (
+              <div className="flex items-center gap-2 text-red-400 text-sm bg-red-400/10 p-3 rounded-lg border border-red-400/20">
+                <AlertCircle size={16} />
+                <span>{error}</span>
+              </div>
+            )}
+            <button
+              type="submit"
+              className="w-full bg-white text-black font-bold py-3 rounded-xl hover:bg-[#FFB800] transition-colors"
+            >
+              Войти
+            </button>
+          </form>
+          
+          <Link to="/" className="flex items-center justify-center gap-2 text-white/40 mt-6 hover:text-white transition-colors text-sm">
+            <ArrowLeft size={16} />
+            Вернуться на сайт
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#0A0A0A] text-white font-sans">
+      {/* Header */}
+      <header className="border-b border-white/5 bg-[#141414]/50 backdrop-blur-xl sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#FFB800] rounded-xl flex items-center justify-center shadow-lg shadow-[#FFB800]/10">
+              <LogOut className="text-black w-5 h-5 rotate-180" />
+            </div>
+            <div>
+              <h2 className="font-bold leading-none">Admin Panel</h2>
+              <span className="text-[10px] text-white/40 uppercase tracking-widest">Portfolio Manager</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={migrateData}
+              className="hidden sm:block text-xs font-medium text-white/40 hover:text-[#FFB800] transition-colors"
+            >
+              Миграция из data.ts
+            </button>
+            <button
+              onClick={handleLogout}
+              className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-500 transition-all"
+            >
+              <LogOut size={20} />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 py-10">
+        {/* Actions Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
+          <div>
+            <h1 className="text-3xl font-bold mb-1">Проекты</h1>
+            <p className="text-white/40">Управление вашим портфолио</p>
+          </div>
+          <button
+            onClick={() => setIsAdding(!isAdding)}
+            className="flex items-center justify-center gap-2 bg-[#FFB800] text-black font-bold px-6 py-3 rounded-2xl hover:bg-white transition-all shadow-lg shadow-[#FFB800]/10"
+          >
+            {isAdding ? <ArrowLeft size={20} /> : <Plus size={20} />}
+            {isAdding ? 'Назад к списку' : 'Добавить кейс'}
+          </button>
+        </div>
+
+        {isAdding ? (
+          /* Form Section */
+          <div className="max-w-3xl bg-[#141414] border border-white/10 rounded-3xl p-8 shadow-2xl">
+            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+              <Plus className="text-[#FFB800]" /> Новый проект
+            </h2>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-white/60">Название проекта</label>
+                  <input
+                    required
+                    value={newProject.title}
+                    onChange={e => setNewProject({...newProject, title: e.target.value})}
+                    placeholder="Напр: Beauty Brand - Instagram"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-white/60">Клиент</label>
+                  <input
+                    required
+                    value={newProject.client}
+                    onChange={e => setNewProject({...newProject, client: e.target.value})}
+                    placeholder="Напр: Fashion Store"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-white/60">Категория</label>
+                  <input
+                    required
+                    value={newProject.category}
+                    onChange={e => setNewProject({...newProject, category: e.target.value})}
+                    placeholder="Напр: Маркетплейс"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-white/60">Услуги (через запятую)</label>
+                  <input
+                    required
+                    value={newProject.services}
+                    onChange={e => setNewProject({...newProject, services: e.target.value})}
+                    placeholder="Ретушь, Цветокоррекция, Фон"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/60">Описание</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={newProject.description}
+                  onChange={e => setNewProject({...newProject, description: e.target.value})}
+                  placeholder="Краткое описание проделанной работы..."
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-white/60">Фото ДО</label>
+                  <label className="group relative block aspect-[4/3] cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed border-white/10 hover:border-[#FFB800]/30 transition-all">
+                    {beforeFile ? (
+                      <img src={URL.createObjectURL(beforeFile)} className="h-full w-full object-cover" alt="Before preview" />
+                    ) : (
+                      <div className="flex h-full flex-col items-center justify-center gap-3 bg-white/5">
+                        <ImageIcon className="text-white/20 group-hover:text-[#FFB800] transition-colors" size={32} />
+                        <span className="text-xs text-white/20 font-medium uppercase tracking-widest">Выбрать файл</span>
+                      </div>
+                    )}
+                    <input type="file" accept="image/*" className="hidden" onChange={e => setBeforeFile(e.target.files?.[0] || null)} />
+                  </label>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-white/60">Фото ПОСЛЕ</label>
+                  <label className="group relative block aspect-[4/3] cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed border-white/10 hover:border-[#FFB800]/30 transition-all">
+                    {afterFile ? (
+                      <img src={URL.createObjectURL(afterFile)} className="h-full w-full object-cover" alt="After preview" />
+                    ) : (
+                      <div className="flex h-full flex-col items-center justify-center gap-3 bg-white/5">
+                        <ImageIcon className="text-white/20 group-hover:text-[#FFB800] transition-colors" size={32} />
+                        <span className="text-xs text-white/20 font-medium uppercase tracking-widest">Выбрать файл</span>
+                      </div>
+                    )}
+                    <input type="file" accept="image/*" className="hidden" onChange={e => setAfterFile(e.target.files?.[0] || null)} />
+                  </label>
+                </div>
+              </div>
+
+              {error && (
+                <div className="flex items-center gap-2 text-red-400 text-sm bg-red-400/10 p-4 rounded-xl border border-red-400/20">
+                  <AlertCircle size={18} />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="submit"
+                  disabled={uploading}
+                  className="flex-1 bg-white text-black font-bold py-4 rounded-2xl hover:bg-[#FFB800] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {uploading ? (
+                    <>
+                      <Loader2 className="animate-spin" size={20} />
+                      Загрузка...
+                    </>
+                  ) : (
+                    <>
+                      <Check size={20} />
+                      Сохранить проект
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        ) : (
+          /* List Section */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {loading ? (
+              <div className="col-span-full py-20 flex flex-col items-center justify-center text-white/20">
+                <Loader2 className="animate-spin mb-4" size={40} />
+                <p>Загрузка данных...</p>
+              </div>
+            ) : projects.length === 0 ? (
+              <div className="col-span-full py-20 bg-[#141414] rounded-3xl border border-white/5 flex flex-col items-center justify-center text-white/20">
+                <ImageIcon size={48} className="mb-4" />
+                <p className="text-lg font-medium">Проектов пока нет</p>
+                <button onClick={() => setIsAdding(true)} className="mt-4 text-[#FFB800] hover:underline">Добавить первый кейс</button>
+              </div>
+            ) : (
+              projects.map(project => (
+                <div key={project.id} className="group bg-[#141414] border border-white/10 rounded-2xl overflow-hidden hover:border-[#FFB800]/30 transition-all flex flex-col">
+                  <div className="relative aspect-[4/3] overflow-hidden">
+                    <img src={project.after_image} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                      <button
+                        onClick={() => handleDelete(project.id)}
+                        className="bg-red-500 text-white p-2.5 rounded-xl hover:bg-red-600 transition-colors shadow-lg"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="p-5 flex-1 flex flex-col">
+                    <h3 className="font-bold text-lg mb-1">{project.title}</h3>
+                    <p className="text-white/40 text-xs mb-3">{project.category}</p>
+                    <p className="text-white/60 text-sm line-clamp-2 mb-4">{project.description}</p>
+                    <div className="mt-auto flex flex-wrap gap-2">
+                      {project.services.slice(0, 3).map((s, i) => (
+                        <span key={i} className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] text-white/40">
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+

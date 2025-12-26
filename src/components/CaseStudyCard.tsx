@@ -146,7 +146,7 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
       >
         {/* Before Image (фон) */}
         <div className="absolute inset-0">
-          {beforeImg && beforeImg.startsWith('/') ? (
+          {beforeImg ? (
             <img 
               src={beforeImg} 
               alt={`${caseStudy.title} - ${t.sections.before}`} 
@@ -165,7 +165,7 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
             transition: isDragging ? 'none' : 'clip-path 0.1s ease-out'
           }}
         >
-          {afterImg && afterImg.startsWith('/') ? (
+          {afterImg ? (
             <img 
               src={afterImg} 
               alt={`${caseStudy.title} - ${t.sections.after}`} 
