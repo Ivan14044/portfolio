@@ -97,20 +97,22 @@ export default function AdminPage() {
   const handleEdit = (project: DatabaseProject) => {
     setEditMode(true);
     setEditingId(project.id);
+    
+    // Поддержка старых проектов при редактировании (заполняем мультиязычные поля из старых одиночных)
     setNewProject({
-      title_uk: project.title_uk || '',
-      title_ru: project.title_ru || '',
-      title_en: project.title_en || '',
+      title_uk: project.title_uk || project.title || '',
+      title_ru: project.title_ru || project.title || '',
+      title_en: project.title_en || project.title || '',
       client: project.client || '',
-      category_uk: project.category_uk || '',
-      category_ru: project.category_ru || '',
-      category_en: project.category_en || '',
-      description_uk: project.description_uk || '',
-      description_ru: project.description_ru || '',
-      description_en: project.description_en || '',
-      services_uk: project.services_uk?.join(', ') || '',
-      services_ru: project.services_ru?.join(', ') || '',
-      services_en: project.services_en?.join(', ') || '',
+      category_uk: project.category_uk || project.category || '',
+      category_ru: project.category_ru || project.category || '',
+      category_en: project.category_en || project.category || '',
+      description_uk: project.description_uk || project.description || '',
+      description_ru: project.description_ru || project.description || '',
+      description_en: project.description_en || project.description || '',
+      services_uk: project.services_uk?.join(', ') || project.services?.join(', ') || '',
+      services_ru: project.services_ru?.join(', ') || project.services?.join(', ') || '',
+      services_en: project.services_en?.join(', ') || project.services?.join(', ') || '',
     });
     setBeforePreview(project.before_image);
     setAfterPreview(project.after_image);
@@ -442,7 +444,11 @@ export default function AdminPage() {
                         <span className="text-[10px] text-white/20 font-bold uppercase">Загрузить</span>
                       </div>
                     )}
-                    <input type="file" accept="image/*" className="hidden" onChange={e => setBeforeFile(e.target.files?.[0] || null)} />
+                    <input type="file" accept="image/*" className="hidden" onChange={e => {
+                      const file = e.target.files?.[0] || null;
+                      setBeforeFile(file);
+                      if (file) setBeforePreview(URL.createObjectURL(file));
+                    }} />
                   </label>
                   {(beforeFile || beforePreview) && <p className="text-[10px] text-white/20 text-center">Нажмите, чтобы изменить</p>}
                 </div>
@@ -459,7 +465,11 @@ export default function AdminPage() {
                         <span className="text-[10px] text-white/20 font-bold uppercase">Загрузить</span>
                       </div>
                     )}
-                    <input type="file" accept="image/*" className="hidden" onChange={e => setAfterFile(e.target.files?.[0] || null)} />
+                    <input type="file" accept="image/*" className="hidden" onChange={e => {
+                      const file = e.target.files?.[0] || null;
+                      setAfterFile(file);
+                      if (file) setAfterPreview(URL.createObjectURL(file));
+                    }} />
                   </label>
                   {(afterFile || afterPreview) && <p className="text-[10px] text-white/20 text-center">Нажмите, чтобы изменить</p>}
                 </div>
