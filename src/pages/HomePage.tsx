@@ -56,7 +56,8 @@ export default function HomePage() {
         }
         
         console.log('✅ Данные успешно получены. Количество проектов из БД:', data?.length || 0);
-        setDbProjects(data || []);
+        // Принудительно обновляем состояние, чтобы React перерисовал компоненты
+        setDbProjects([...(data || [])]);
       } catch (err) {
         console.error('⚠️ Критическая ошибка при загрузке данных:', err);
       } finally {
@@ -64,7 +65,7 @@ export default function HomePage() {
       }
     }
     fetchProjects();
-  }, []);
+  }, [language]); // Перезагружаем при смене языка для надежности
 
   // Только динамические проекты из базы данных
   const displayProjects = (dbProjects || []).map(p => {

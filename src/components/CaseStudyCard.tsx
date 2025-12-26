@@ -144,27 +144,8 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
         onTouchMove={handleTouchMove}
         className="absolute inset-0 w-full h-full cursor-col-resize"
       >
-        {/* Before Image (фон) */}
+        {/* After Image (фон, всегда внизу) */}
         <div className="absolute inset-0">
-          {beforeImg ? (
-            <img 
-              src={beforeImg} 
-              alt={`${caseStudy.title} - ${t.sections.before}`} 
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-900/20 to-black" />
-          )}
-        </div>
-
-        {/* After Image (верхний слой, обрезается по позиции слайдера) */}
-        <div 
-          className="absolute inset-0 overflow-hidden"
-          style={{ 
-            clipPath: `inset(0 ${100 - sliderPosition}% 0 0)`,
-            transition: isDragging ? 'none' : 'clip-path 0.1s ease-out'
-          }}
-        >
           {afterImg ? (
             <img 
               src={afterImg} 
@@ -173,6 +154,25 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-black" />
+          )}
+        </div>
+
+        {/* Before Image (верхний слой, обрезается по позиции слайдера) */}
+        <div 
+          className="absolute inset-0 overflow-hidden z-10"
+          style={{ 
+            clipPath: `inset(0 ${100 - sliderPosition}% 0 0)`,
+            transition: isDragging ? 'none' : 'clip-path 0.1s ease-out'
+          }}
+        >
+          {beforeImg ? (
+            <img 
+              src={beforeImg} 
+              alt={`${caseStudy.title} - ${t.sections.before}`} 
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-900/20 to-black" />
           )}
         </div>
 
