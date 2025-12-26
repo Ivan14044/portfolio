@@ -13,11 +13,30 @@ export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '');
 // Тип для проекта из базы данных
 export interface DatabaseProject {
   id: string;
-  title: string;
+  // Старые поля (для совместимости, пока не удаляем)
+  title?: string;
   client: string;
-  category: string;
-  description: string;
-  services: string[];
+  category?: string;
+  description?: string;
+  services?: string[];
+  
+  // Новые языковые поля
+  title_uk: string;
+  title_ru: string;
+  title_en: string;
+  
+  category_uk: string;
+  category_ru: string;
+  category_en: string;
+  
+  description_uk: string;
+  description_ru: string;
+  description_en: string;
+  
+  services_uk: string[];
+  services_ru: string[];
+  services_en: string[];
+  
   before_image: string;
   after_image: string;
   created_at?: string;

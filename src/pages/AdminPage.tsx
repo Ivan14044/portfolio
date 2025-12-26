@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
 import type { DatabaseProject } from '../utils/supabase';
-import { LogOut, Plus, Trash2, Image as ImageIcon, Check, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
+import { LogOut, Plus, Trash2, Image as ImageIcon, Check, AlertCircle, Loader2, ArrowLeft, Languages } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { portfolioData } from '../data';
+
+type Lang = 'uk' | 'ru' | 'en';
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -12,15 +14,17 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [projects, setProjects] = useState<DatabaseProject[]>([]);
   const [isAdding, setIsAdding] = useState(false);
+  const [activeLang, setActiveLang] = useState<Lang>('uk');
 
   // Состояние для новой формы проекта
   const [newProject, setNewProject] = useState({
-    title: '',
+    title_uk: '', title_ru: '', title_en: '',
     client: '',
-    category: '',
-    description: '',
-    services: '',
+    category_uk: '', category_ru: '', category_en: '',
+    description_uk: '', description_ru: '', description_en: '',
+    services_uk: '', services_ru: '', services_en: '',
   });
+  
   const [beforeFile, setBeforeFile] = useState<File | null>(null);
   const [afterFile, setAfterFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -35,7 +39,6 @@ export default function AdminPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Пароль берется из .env, fallback на более сложный пароль для безопасности
     const adminPass = import.meta.env.VITE_ADMIN_PASSWORD || 'DariaPortfolio_Secure_2025';
     if (password === adminPass) {
       setIsAuthenticated(true);
@@ -102,11 +105,19 @@ export default function AdminPage() {
       const { error: insertError } = await supabase
         .from('projects')
         .insert([{
-          title: newProject.title,
+          title_uk: newProject.title_uk,
+          title_ru: newProject.title_ru,
+          title_en: newProject.title_en,
           client: newProject.client,
-          category: newProject.category,
-          description: newProject.description,
-          services: newProject.services.split(',').map(s => s.trim()),
+          category_uk: newProject.category_uk,
+          category_ru: newProject.category_ru,
+          category_en: newProject.category_en,
+          description_uk: newProject.description_uk,
+          description_ru: newProject.description_ru,
+          description_en: newProject.description_en,
+          services_uk: newProject.services_uk.split(',').map(s => s.trim()),
+          services_ru: newProject.services_ru.split(',').map(s => s.trim()),
+          services_en: newProject.services_en.split(',').map(s => s.trim()),
           before_image: beforeUrl,
           after_image: afterUrl,
         }]);
@@ -114,7 +125,13 @@ export default function AdminPage() {
       if (insertError) throw insertError;
 
       setIsAdding(false);
-      setNewProject({ title: '', client: '', category: '', description: '', services: '' });
+      setNewProject({ 
+        title_uk: '', title_ru: '', title_en: '',
+        client: '',
+        category_uk: '', category_ru: '', category_en: '',
+        description_uk: '', description_ru: '', description_en: '',
+        services_uk: '', services_ru: '', services_en: '',
+      });
       setBeforeFile(null);
       setAfterFile(null);
       fetchProjects();
@@ -146,11 +163,19 @@ export default function AdminPage() {
     setLoading(true);
     try {
       const projectsToInsert = portfolioData.portfolio.map(p => ({
-        title: p.title,
+        title_uk: p.title, // Временная миграция в один язык для всех колонок
+        title_ru: p.title,
+        title_en: p.title,
         client: p.client,
-        category: p.category,
-        description: p.description,
-        services: p.services,
+        category_uk: p.category,
+        category_ru: p.category,
+        category_en: p.category,
+        description_uk: p.description,
+        description_ru: p.description,
+        description_en: p.description,
+        services_uk: p.services,
+        services_ru: p.services,
+        services_en: p.services,
         before_image: p.beforeImage,
         after_image: p.afterImage,
       }));
@@ -245,7 +270,6 @@ export default function AdminPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-10">
-        {/* Actions Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
           <div>
             <h1 className="text-3xl font-bold mb-1">Проекты</h1>
@@ -261,91 +285,113 @@ export default function AdminPage() {
         </div>
 
         {isAdding ? (
-          /* Form Section */
-          <div className="max-w-3xl bg-[#141414] border border-white/10 rounded-3xl p-8 shadow-2xl">
-            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-              <Plus className="text-[#FFB800]" /> Новый проект
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="max-w-4xl bg-[#141414] border border-white/10 rounded-3xl p-8 shadow-2xl">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <Plus className="text-[#FFB800]" /> Новый проект
+              </h2>
+              <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
+                {(['uk', 'ru', 'en'] as const).map(l => (
+                  <button
+                    key={l}
+                    onClick={() => setActiveLang(l)}
+                    className={`px-4 py-2 rounded-lg text-xs font-bold uppercase transition-all ${activeLang === l ? 'bg-[#FFB800] text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
+                  >
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/60">Название проекта</label>
-                  <input
-                    required
-                    value={newProject.title}
-                    onChange={e => setNewProject({...newProject, title: e.target.value})}
-                    placeholder="Напр: Beauty Brand - Instagram"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
-                  />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-white/60 flex items-center gap-2">
+                      <Languages size={14} className="text-[#FFB800]" /> Название ({activeLang.toUpperCase()})
+                    </label>
+                    <input
+                      required
+                      value={newProject[`title_${activeLang}` as keyof typeof newProject]}
+                      onChange={e => setNewProject({...newProject, [`title_${activeLang}`]: e.target.value})}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-white/60">Клиент (общий)</label>
+                    <input
+                      required
+                      value={newProject.client}
+                      onChange={e => setNewProject({...newProject, client: e.target.value})}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/60">Клиент</label>
-                  <input
-                    required
-                    value={newProject.client}
-                    onChange={e => setNewProject({...newProject, client: e.target.value})}
-                    placeholder="Напр: Fashion Store"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/60">Категория</label>
-                  <input
-                    required
-                    value={newProject.category}
-                    onChange={e => setNewProject({...newProject, category: e.target.value})}
-                    placeholder="Напр: Маркетплейс"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/60">Услуги (через запятую)</label>
-                  <input
-                    required
-                    value={newProject.services}
-                    onChange={e => setNewProject({...newProject, services: e.target.value})}
-                    placeholder="Ретушь, Цветокоррекция, Фон"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
-                  />
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-white/60 flex items-center gap-2">
+                      <Languages size={14} className="text-[#FFB800]" /> Категория ({activeLang.toUpperCase()})
+                    </label>
+                    <input
+                      required
+                      value={newProject[`category_${activeLang}` as keyof typeof newProject]}
+                      onChange={e => setNewProject({...newProject, [`category_${activeLang}`]: e.target.value})}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-white/60 flex items-center gap-2">
+                      <Languages size={14} className="text-[#FFB800]" /> Услуги ({activeLang.toUpperCase()})
+                    </label>
+                    <input
+                      required
+                      value={newProject[`services_${activeLang}` as keyof typeof newProject]}
+                      onChange={e => setNewProject({...newProject, [`services_${activeLang}`]: e.target.value})}
+                      placeholder="Через запятую"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
+                    />
+                  </div>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-white/60">Описание</label>
+                <label className="text-sm font-medium text-white/60 flex items-center gap-2">
+                  <Languages size={14} className="text-[#FFB800]" /> Описание ({activeLang.toUpperCase()})
+                </label>
                 <textarea
                   required
-                  rows={3}
-                  value={newProject.description}
-                  onChange={e => setNewProject({...newProject, description: e.target.value})}
-                  placeholder="Краткое описание проделанной работы..."
+                  rows={4}
+                  value={newProject[`description_${activeLang}` as keyof typeof newProject]}
+                  onChange={e => setNewProject({...newProject, [`description_${activeLang}`]: e.target.value})}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors resize-none"
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/5">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/60">Фото ДО</label>
+                  <label className="text-sm font-medium text-white/60 uppercase tracking-widest">Фото ДО</label>
                   <label className="group relative block aspect-[4/3] cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed border-white/10 hover:border-[#FFB800]/30 transition-all">
                     {beforeFile ? (
                       <img src={URL.createObjectURL(beforeFile)} className="h-full w-full object-cover" alt="Before preview" />
                     ) : (
                       <div className="flex h-full flex-col items-center justify-center gap-3 bg-white/5">
-                        <ImageIcon className="text-white/20 group-hover:text-[#FFB800] transition-colors" size={32} />
-                        <span className="text-xs text-white/20 font-medium uppercase tracking-widest">Выбрать файл</span>
+                        <ImageIcon className="text-white/20 group-hover:text-[#FFB800]" size={32} />
+                        <span className="text-[10px] text-white/20 font-bold uppercase">Загрузить</span>
                       </div>
                     )}
                     <input type="file" accept="image/*" className="hidden" onChange={e => setBeforeFile(e.target.files?.[0] || null)} />
                   </label>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/60">Фото ПОСЛЕ</label>
+                  <label className="text-sm font-medium text-white/60 uppercase tracking-widest">Фото ПОСЛЕ</label>
                   <label className="group relative block aspect-[4/3] cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed border-white/10 hover:border-[#FFB800]/30 transition-all">
                     {afterFile ? (
                       <img src={URL.createObjectURL(afterFile)} className="h-full w-full object-cover" alt="After preview" />
                     ) : (
                       <div className="flex h-full flex-col items-center justify-center gap-3 bg-white/5">
-                        <ImageIcon className="text-white/20 group-hover:text-[#FFB800] transition-colors" size={32} />
-                        <span className="text-xs text-white/20 font-medium uppercase tracking-widest">Выбрать файл</span>
+                        <ImageIcon className="text-white/20 group-hover:text-[#FFB800]" size={32} />
+                        <span className="text-[10px] text-white/20 font-bold uppercase">Загрузить</span>
                       </div>
                     )}
                     <input type="file" accept="image/*" className="hidden" onChange={e => setAfterFile(e.target.files?.[0] || null)} />
@@ -360,29 +406,17 @@ export default function AdminPage() {
                 </div>
               )}
 
-              <div className="flex gap-4 pt-4">
-                <button
-                  type="submit"
-                  disabled={uploading}
-                  className="flex-1 bg-white text-black font-bold py-4 rounded-2xl hover:bg-[#FFB800] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {uploading ? (
-                    <>
-                      <Loader2 className="animate-spin" size={20} />
-                      Загрузка...
-                    </>
-                  ) : (
-                    <>
-                      <Check size={20} />
-                      Сохранить проект
-                    </>
-                  )}
-                </button>
-              </div>
+              <button
+                type="submit"
+                disabled={uploading}
+                className="w-full bg-white text-black font-black py-5 rounded-2xl hover:bg-[#FFB800] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+              >
+                {uploading ? <Loader2 className="animate-spin" /> : <Check size={24} />}
+                {uploading ? 'СОХРАНЕНИЕ...' : 'ОПУБЛИКОВАТЬ КЕЙС'}
+              </button>
             </form>
           </div>
         ) : (
-          /* List Section */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {loading ? (
               <div className="col-span-full py-20 flex flex-col items-center justify-center text-white/20">
@@ -393,13 +427,13 @@ export default function AdminPage() {
               <div className="col-span-full py-20 bg-[#141414] rounded-3xl border border-white/5 flex flex-col items-center justify-center text-white/20">
                 <ImageIcon size={48} className="mb-4" />
                 <p className="text-lg font-medium">Проектов пока нет</p>
-                <button onClick={() => setIsAdding(true)} className="mt-4 text-[#FFB800] hover:underline">Добавить первый кейс</button>
+                <button onClick={() => setIsAdding(true)} className="mt-4 text-[#FFB800] hover:underline font-bold">Добавить первый кейс</button>
               </div>
             ) : (
               projects.map(project => (
                 <div key={project.id} className="group bg-[#141414] border border-white/10 rounded-2xl overflow-hidden hover:border-[#FFB800]/30 transition-all flex flex-col">
                   <div className="relative aspect-[4/3] overflow-hidden">
-                    <img src={project.after_image} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <img src={project.after_image} alt={project.title_ru} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
                       <button
                         onClick={() => handleDelete(project.id)}
@@ -410,12 +444,12 @@ export default function AdminPage() {
                     </div>
                   </div>
                   <div className="p-5 flex-1 flex flex-col">
-                    <h3 className="font-bold text-lg mb-1">{project.title}</h3>
-                    <p className="text-white/40 text-xs mb-3">{project.category}</p>
-                    <p className="text-white/60 text-sm line-clamp-2 mb-4">{project.description}</p>
+                    <h3 className="font-bold text-lg mb-1 leading-tight">{project.title_ru || project.title_uk || project.title_en}</h3>
+                    <p className="text-white/40 text-xs mb-3 uppercase tracking-widest">{project.category_ru}</p>
+                    <p className="text-white/60 text-sm line-clamp-2 mb-4 leading-relaxed">{project.description_ru}</p>
                     <div className="mt-auto flex flex-wrap gap-2">
-                      {project.services.slice(0, 3).map((s, i) => (
-                        <span key={i} className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] text-white/40">
+                      {project.services_ru?.slice(0, 3).map((s, i) => (
+                        <span key={i} className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] text-white/40 uppercase font-bold">
                           {s}
                         </span>
                       ))}
@@ -430,4 +464,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
