@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
 import type { DatabaseProject } from '../utils/supabase';
-import { LogOut, Plus, Trash2, Image as ImageIcon, Check, AlertCircle, Loader2, ArrowLeft, Languages } from 'lucide-react';
+import { LogOut, Plus, Trash2, Image as ImageIcon, Check, AlertCircle, Loader2, ArrowLeft, Languages, Pencil, Database } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { portfolioData } from '../data';
 
@@ -15,6 +15,10 @@ export default function AdminPage() {
   const [projects, setProjects] = useState<DatabaseProject[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [activeLang, setActiveLang] = useState<Lang>('uk');
+  
+  // Состояния для редактирования
+  const [editMode, setEditMode] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   // Состояние для новой формы проекта
   const [newProject, setNewProject] = useState({
@@ -27,6 +31,8 @@ export default function AdminPage() {
   
   const [beforeFile, setBeforeFile] = useState<File | null>(null);
   const [afterFile, setAfterFile] = useState<File | null>(null);
+  const [beforePreview, setBeforePreview] = useState<string | null>(null);
+  const [afterPreview, setAfterPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
@@ -88,9 +94,51 @@ export default function AdminPage() {
     return publicUrl;
   };
 
+  const handleEdit = (project: DatabaseProject) => {
+    setEditMode(true);
+    setEditingId(project.id);
+    setNewProject({
+      title_uk: project.title_uk || '',
+      title_ru: project.title_ru || '',
+      title_en: project.title_en || '',
+      client: project.client || '',
+      category_uk: project.category_uk || '',
+      category_ru: project.category_ru || '',
+      category_en: project.category_en || '',
+      description_uk: project.description_uk || '',
+      description_ru: project.description_ru || '',
+      description_en: project.description_en || '',
+      services_uk: project.services_uk?.join(', ') || '',
+      services_ru: project.services_ru?.join(', ') || '',
+      services_en: project.services_en?.join(', ') || '',
+    });
+    setBeforePreview(project.before_image);
+    setAfterPreview(project.after_image);
+    setIsAdding(true);
+  };
+
+  const resetForm = () => {
+    setIsAdding(false);
+    setEditMode(false);
+    setEditingId(null);
+    setNewProject({ 
+      title_uk: '', title_ru: '', title_en: '',
+      client: '',
+      category_uk: '', category_ru: '', category_en: '',
+      description_uk: '', description_ru: '', description_en: '',
+      services_uk: '', services_ru: '', services_en: '',
+    });
+    setBeforeFile(null);
+    setAfterFile(null);
+    setBeforePreview(null);
+    setAfterPreview(null);
+    setError('');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!beforeFile || !afterFile) {
+    
+    if (!editMode && (!beforeFile || !afterFile)) {
       setError('Пожалуйста, выберите оба изображения (До и После)');
       return;
     }
@@ -99,42 +147,52 @@ export default function AdminPage() {
     setError('');
 
     try {
-      const beforeUrl = await handleUpload(beforeFile, 'before');
-      const afterUrl = await handleUpload(afterFile, 'after');
+      let beforeUrl = beforePreview;
+      let afterUrl = afterPreview;
 
-      const { error: insertError } = await supabase
-        .from('projects')
-        .insert([{
-          title_uk: newProject.title_uk,
-          title_ru: newProject.title_ru,
-          title_en: newProject.title_en,
-          client: newProject.client,
-          category_uk: newProject.category_uk,
-          category_ru: newProject.category_ru,
-          category_en: newProject.category_en,
-          description_uk: newProject.description_uk,
-          description_ru: newProject.description_ru,
-          description_en: newProject.description_en,
-          services_uk: newProject.services_uk.split(',').map(s => s.trim()),
-          services_ru: newProject.services_ru.split(',').map(s => s.trim()),
-          services_en: newProject.services_en.split(',').map(s => s.trim()),
-          before_image: beforeUrl,
-          after_image: afterUrl,
-        }]);
+      if (beforeFile) {
+        beforeUrl = await handleUpload(beforeFile, 'before');
+      }
+      if (afterFile) {
+        afterUrl = await handleUpload(afterFile, 'after');
+      }
 
-      if (insertError) throw insertError;
+      const projectData = {
+        title_uk: newProject.title_uk,
+        title_ru: newProject.title_ru,
+        title_en: newProject.title_en,
+        client: newProject.client,
+        category_uk: newProject.category_uk,
+        category_ru: newProject.category_ru,
+        category_en: newProject.category_en,
+        description_uk: newProject.description_uk,
+        description_ru: newProject.description_ru,
+        description_en: newProject.description_en,
+        services_uk: newProject.services_uk.split(',').map(s => s.trim()).filter(s => s !== ''),
+        services_ru: newProject.services_ru.split(',').map(s => s.trim()).filter(s => s !== ''),
+        services_en: newProject.services_en.split(',').map(s => s.trim()).filter(s => s !== ''),
+        before_image: beforeUrl,
+        after_image: afterUrl,
+      };
 
-      alert('Проект успешно сохранен и опубликован!');
-      setIsAdding(false);
-      setNewProject({ 
-        title_uk: '', title_ru: '', title_en: '',
-        client: '',
-        category_uk: '', category_ru: '', category_en: '',
-        description_uk: '', description_ru: '', description_en: '',
-        services_uk: '', services_ru: '', services_en: '',
-      });
-      setBeforeFile(null);
-      setAfterFile(null);
+      if (editMode && editingId) {
+        const { error: updateError } = await supabase
+          .from('projects')
+          .update(projectData)
+          .eq('id', editingId);
+        
+        if (updateError) throw updateError;
+        alert('Проект успешно обновлен!');
+      } else {
+        const { error: insertError } = await supabase
+          .from('projects')
+          .insert([projectData]);
+        
+        if (insertError) throw insertError;
+        alert('Проект успешно сохранен и опубликован!');
+      }
+
+      resetForm();
       fetchProjects();
     } catch (err: any) {
       setError(err.message || 'Ошибка при сохранении проекта');
@@ -164,7 +222,7 @@ export default function AdminPage() {
     setLoading(true);
     try {
       const projectsToInsert = portfolioData.portfolio.map(p => ({
-        title_uk: p.title, // Временная миграция в один язык для всех колонок
+        title_uk: p.title,
         title_ru: p.title,
         title_en: p.title,
         client: p.client,
@@ -277,7 +335,7 @@ export default function AdminPage() {
             <p className="text-white/40">Управление вашим портфолио</p>
           </div>
           <button
-            onClick={() => setIsAdding(!isAdding)}
+            onClick={() => isAdding ? resetForm() : setIsAdding(true)}
             className="flex items-center justify-center gap-2 bg-[#FFB800] text-black font-bold px-6 py-3 rounded-2xl hover:bg-white transition-all shadow-lg shadow-[#FFB800]/10"
           >
             {isAdding ? <ArrowLeft size={20} /> : <Plus size={20} />}
@@ -289,7 +347,8 @@ export default function AdminPage() {
           <div className="max-w-4xl bg-[#141414] border border-white/10 rounded-3xl p-8 shadow-2xl">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-xl font-bold flex items-center gap-2">
-                <Plus className="text-[#FFB800]" /> Новый проект
+                {editMode ? <Pencil className="text-[#FFB800]" /> : <Plus className="text-[#FFB800]" />}
+                {editMode ? 'Редактировать проект' : 'Новый проект'}
               </h2>
               <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
                 {(['uk', 'ru', 'en'] as const).map(l => (
@@ -375,6 +434,8 @@ export default function AdminPage() {
                   <label className="group relative block aspect-[4/3] cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed border-white/10 hover:border-[#FFB800]/30 transition-all">
                     {beforeFile ? (
                       <img src={URL.createObjectURL(beforeFile)} className="h-full w-full object-cover" alt="Before preview" />
+                    ) : beforePreview ? (
+                      <img src={beforePreview} className="h-full w-full object-cover" alt="Current before" />
                     ) : (
                       <div className="flex h-full flex-col items-center justify-center gap-3 bg-white/5">
                         <ImageIcon className="text-white/20 group-hover:text-[#FFB800]" size={32} />
@@ -383,12 +444,15 @@ export default function AdminPage() {
                     )}
                     <input type="file" accept="image/*" className="hidden" onChange={e => setBeforeFile(e.target.files?.[0] || null)} />
                   </label>
+                  {(beforeFile || beforePreview) && <p className="text-[10px] text-white/20 text-center">Нажмите, чтобы изменить</p>}
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-white/60 uppercase tracking-widest">Фото ПОСЛЕ</label>
                   <label className="group relative block aspect-[4/3] cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed border-white/10 hover:border-[#FFB800]/30 transition-all">
                     {afterFile ? (
                       <img src={URL.createObjectURL(afterFile)} className="h-full w-full object-cover" alt="After preview" />
+                    ) : afterPreview ? (
+                      <img src={afterPreview} className="h-full w-full object-cover" alt="Current after" />
                     ) : (
                       <div className="flex h-full flex-col items-center justify-center gap-3 bg-white/5">
                         <ImageIcon className="text-white/20 group-hover:text-[#FFB800]" size={32} />
@@ -397,6 +461,7 @@ export default function AdminPage() {
                     )}
                     <input type="file" accept="image/*" className="hidden" onChange={e => setAfterFile(e.target.files?.[0] || null)} />
                   </label>
+                  {(afterFile || afterPreview) && <p className="text-[10px] text-white/20 text-center">Нажмите, чтобы изменить</p>}
                 </div>
               </div>
 
@@ -412,8 +477,8 @@ export default function AdminPage() {
                 disabled={uploading}
                 className="w-full bg-white text-black font-black py-5 rounded-2xl hover:bg-[#FFB800] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
               >
-                {uploading ? <Loader2 className="animate-spin" /> : <Check size={24} />}
-                {uploading ? 'СОХРАНЕНИЕ...' : 'ОПУБЛИКОВАТЬ КЕЙС'}
+                {uploading ? <Loader2 className="animate-spin" /> : editMode ? <Check size={24} /> : <Check size={24} />}
+                {uploading ? 'СОХРАНЕНИЕ...' : editMode ? 'ОБНОВИТЬ ПРОЕКТ' : 'ОПУБЛИКОВАТЬ КЕЙС'}
               </button>
             </form>
           </div>
@@ -425,32 +490,58 @@ export default function AdminPage() {
                 <p>Загрузка данных...</p>
               </div>
             ) : projects.length === 0 ? (
-              <div className="col-span-full py-20 bg-[#141414] rounded-3xl border border-white/5 flex flex-col items-center justify-center text-white/20">
-                <ImageIcon size={48} className="mb-4" />
-                <p className="text-lg font-medium">Проектов пока нет</p>
-                <button onClick={() => setIsAdding(true)} className="mt-4 text-[#FFB800] hover:underline font-bold">Добавить первый кейс</button>
+              <div className="col-span-full py-20 bg-[#141414] rounded-3xl border border-white/5 flex flex-col items-center justify-center text-center px-6">
+                <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 mx-auto">
+                  <Database size={40} className="text-white/10" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">База данных пуста</h3>
+                <p className="text-white/40 mb-8 max-w-sm mx-auto">
+                  Вы можете начать добавлять свои проекты вручную или импортировать стандартные кейсы-заглушки.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <button 
+                    onClick={() => setIsAdding(true)} 
+                    className="flex items-center gap-2 bg-[#FFB800] text-black font-bold px-8 py-4 rounded-2xl hover:bg-white transition-all w-full sm:w-auto"
+                  >
+                    <Plus size={20} /> Создать первый кейс
+                  </button>
+                  <button 
+                    onClick={migrateData} 
+                    className="flex items-center gap-2 bg-white/5 border border-white/10 text-white font-bold px-8 py-4 rounded-2xl hover:bg-white/10 transition-all w-full sm:w-auto"
+                  >
+                    <Database size={20} /> Импорт заглушек
+                  </button>
+                </div>
               </div>
             ) : (
               projects.map(project => (
                 <div key={project.id} className="group bg-[#141414] border border-white/10 rounded-2xl overflow-hidden hover:border-[#FFB800]/30 transition-all flex flex-col">
                   <div className="relative aspect-[4/3] overflow-hidden">
                     <img src={project.after_image} alt={project.title_ru} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                      <button
-                        onClick={() => handleDelete(project.id)}
-                        className="bg-red-500 text-white p-2.5 rounded-xl hover:bg-red-600 transition-colors shadow-lg"
-                      >
-                        <Trash2 size={18} />
-                      </button>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end justify-between p-4">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEdit(project)}
+                          className="bg-white text-black p-2.5 rounded-xl hover:bg-[#FFB800] transition-colors shadow-lg flex items-center gap-2 font-bold text-xs"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(project.id)}
+                          className="bg-red-500/20 backdrop-blur-md text-red-500 border border-red-500/30 p-2.5 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-lg"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                   <div className="p-5 flex-1 flex flex-col">
-                    <h3 className="font-bold text-lg mb-1 leading-tight">{project.title_ru || project.title_uk || project.title_en}</h3>
-                    <p className="text-white/40 text-xs mb-3 uppercase tracking-widest">{project.category_ru}</p>
-                    <p className="text-white/60 text-sm line-clamp-2 mb-4 leading-relaxed">{project.description_ru}</p>
+                    <h3 className="font-bold text-lg mb-1 leading-tight line-clamp-1">{project.title_ru || project.title_uk || project.title_en}</h3>
+                    <p className="text-white/40 text-[10px] mb-3 uppercase tracking-[0.2em] font-black">{project.category_ru}</p>
+                    <p className="text-white/60 text-sm line-clamp-2 mb-4 leading-relaxed font-medium">{project.description_ru}</p>
                     <div className="mt-auto flex flex-wrap gap-2">
                       {project.services_ru?.slice(0, 3).map((s, i) => (
-                        <span key={i} className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] text-white/40 uppercase font-bold">
+                        <span key={i} className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[9px] text-white/40 uppercase font-black">
                           {s}
                         </span>
                       ))}
