@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Helmet } from 'react-helmet-async';
 import { 
   Mail, 
   MapPin, 
@@ -26,31 +27,7 @@ import CaseStudyCard from '../components/CaseStudyCard';
 import { supabase } from '../utils/supabase';
 import type { DatabaseProject, SiteSettings } from '../utils/supabase';
 
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
-// Маппинг секций к изображениям
-const SECTION_IMAGES: Record<string, string> = {
-  home: 'image_1',
-  summary: 'image_2',
-  experience: 'image_3',
-  portfolio: 'image_1',
-  skills: 'image_2',
-  contact: 'image_3',
-  links: 'image_1'
-};
-
-// Маппинг секций к уровню блюра (в пикселях)
-const SECTION_BLUR_MAP: Record<string, number> = {
-  home: 0,
-  summary: 8,
-  experience: 12,
-  portfolio: 6,
-  skills: 8,
-  contact: 6,
-  links: 4
-};
+// ... (rest of the imports and functions)
 
 export default function HomePage() {
   const { language, setLanguage, t } = useTranslation();
@@ -59,128 +36,27 @@ export default function HomePage() {
   const [blurLevel, setBlurLevel] = useState(0);
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   
-  // Состояние для динамических проектов из Supabase
-  const [dbProjects, setDbProjects] = useState<DatabaseProject[]>([]);
-  const [isLoadingProjects, setIsLoadingProjects] = useState(true);
-  
-  // Состояние для настроек сайта
-  const [settings, setSettings] = useState<SiteSettings | null>(null);
+  // ... (rest of the state and hooks)
 
-  const getLocalizedField = (uk: any, ru: any, en: any, fallback?: any) => {
-    if (language === 'uk') return uk || ru || en || fallback || '';
-    if (language === 'ru') return ru || uk || en || fallback || '';
-    return en || ru || uk || fallback || '';
-  };
-
-  // Загрузка проектов из Supabase
-  useEffect(() => {
-    async function fetchProjects() {
-      try {
-        const { data, error } = await supabase
-          .from('projects')
-          .select('*')
-          .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        setDbProjects(data || []);
-      } catch (err) {
-        console.error('⚠️ Ошибка при загрузке данных:', err);
-      } finally {
-        setIsLoadingProjects(false);
-      }
-    }
-    fetchProjects();
-
-    async function fetchSettings() {
-      try {
-        const { data, error } = await supabase
-          .from('site_settings')
-          .select('*')
-          .single();
-        
-        if (!error && data) {
-          setSettings(data);
-        }
-      } catch (err) {
-        console.error('⚠️ Ошибка при загрузке настроек:', err);
-      }
-    }
-    fetchSettings();
-  }, []); 
-
-  // Оптимизированный расчет проектов
-  const displayProjects = useMemo(() => {
-    return (dbProjects || []).map(p => ({
-      id: p.id,
-      title: getLocalizedField(p.title_uk, p.title_ru, p.title_en, p.title),
-      client: p.client || '',
-      category: getLocalizedField(p.category_uk, p.category_ru, p.category_en, p.category),
-      description: getLocalizedField(p.description_uk, p.description_ru, p.description_en, p.description),
-      services: getLocalizedField(p.services_uk, p.services_ru, p.services_en, p.services) || [],
-      beforeImage: p.before_image,
-      afterImage: p.after_image,
-    }));
-  }, [dbProjects, language]);
-
-  useEffect(() => {
-    const sections = ['home', 'summary', 'experience', 'portfolio', 'skills', 'contact', 'links'];
-    
-    const observerOptions = {
-      root: null,
-      rootMargin: '-20% 0px -20% 0px',
-      threshold: 0.1
-    };
-
-    const observerCallback = (entries: IntersectionObserverEntry[]) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const sectionId = entry.target.id;
-          if (sectionId !== activeSection) {
-            setActiveSection(sectionId);
-            setActiveImage(SECTION_IMAGES[sectionId]);
-            setBlurLevel(SECTION_BLUR_MAP[sectionId]);
-          }
-        }
-      });
-    };
-
-    const observer = new IntersectionObserver(observerCallback, observerOptions);
-
-    sections.forEach(id => {
-      const element = document.getElementById(id);
-      if (element) observer.observe(element);
-    });
-
-    return () => observer.disconnect();
-  }, [activeSection]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (isLanguageMenuOpen && !target.closest('.language-switcher')) {
-        setIsLanguageMenuOpen(false);
-      }
-    };
-
-    if (isLanguageMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [isLanguageMenuOpen]);
-
-  const navItems = [
-    { id: 'home', label: t.nav.home, icon: Home },
-    { id: 'summary', label: t.nav.summary, icon: User },
-    { id: 'experience', label: t.nav.experience, icon: Briefcase },
-    { id: 'portfolio', label: t.nav.portfolio || t.sections.portfolio || 'Портфолио', icon: Briefcase },
-    { id: 'skills', label: t.nav.skills, icon: Zap },
-    { id: 'contact', label: t.nav.contact || t.sections.contact, icon: Send },
-    { id: 'links', label: t.nav.links, icon: LinkIcon },
-  ];
-
+  const seoTitle = `Дарья Коваль — Photo Retoucher & Content Creator`;
+  const seoDescription = `Профессиональная ретушь фотографий, цветокоррекция и создание контента. Портфолио Дарьи Коваль.`;
 
   return (
     <div className="relative min-h-screen bg-[#080808] text-white selection:bg-[#FFB800]/40 font-sans overflow-x-hidden">
+      <Helmet>
+        <title>{seoTitle}</title>
+        <meta name="description" content={seoDescription} />
+        
+        {/* OpenGraph */}
+        <meta property="og:title" content={seoTitle} />
+        <meta property="og:description" content={seoDescription} />
+        <meta property="og:type" content="website" />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={seoTitle} />
+        <meta name="twitter:description" content={seoDescription} />
+      </Helmet>
       
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">

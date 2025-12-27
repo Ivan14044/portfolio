@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Helmet } from 'react-helmet-async';
 import { 
   ArrowLeft, 
   Briefcase, 
@@ -70,8 +71,28 @@ export default function ProjectPage() {
   const services = getLocalizedField(project.services_uk, project.services_ru, project.services_en, project.services) || [];
   const content = getLocalizedField(project.content_uk, project.content_ru, project.content_en);
 
+  const seoTitle = `${title} — ${category} | Дарья Коваль`;
+  const seoDescription = description.length > 160 ? description.substring(0, 157) + '...' : description;
+
   return (
     <div className="min-h-screen bg-[#080808] text-white selection:bg-[#FFB800]/40 font-sans">
+      <Helmet>
+        <title>{seoTitle}</title>
+        <meta name="description" content={seoDescription} />
+        
+        {/* OpenGraph */}
+        <meta property="og:title" content={seoTitle} />
+        <meta property="og:description" content={seoDescription} />
+        <meta property="og:image" content={project.after_image} />
+        <meta property="og:type" content="article" />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={seoTitle} />
+        <meta name="twitter:description" content={seoDescription} />
+        <meta name="twitter:image" content={project.after_image} />
+      </Helmet>
+
       {/* Header / Nav */}
       <header className="fixed top-0 left-0 right-0 z-50 px-4 md:px-12 py-6 flex items-center justify-between pointer-events-none">
         <Link 

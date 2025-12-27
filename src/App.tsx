@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import HomePage from './pages/HomePage';
 import AdminPage from './pages/AdminPage';
 import ProjectPage from './pages/ProjectPage';
@@ -10,7 +11,7 @@ import CookieConsent from './components/CookieConsent';
 
 export default function App() {
   return (
-    <>
+    <HelmetProvider>
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -21,6 +22,6 @@ export default function App() {
         <Route path="/cookies" element={<CookiePolicy />} />
       </Routes>
       <CookieConsent />
-    </>
+    </HelmetProvider>
   );
 }
