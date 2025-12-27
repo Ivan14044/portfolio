@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { useTranslation } from '../contexts/TranslationContext';
 
 export interface CaseStudy {
+  id?: string;
   title: string;
   client: string;
   category: string;
@@ -247,4 +247,4 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
       </div>
     </div>
   );
-};
+}

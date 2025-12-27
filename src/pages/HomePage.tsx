@@ -12,13 +12,14 @@ import {
   Linkedin,
   Send,
   Loader2,
+  Globe, 
+  ChevronDown
 } from 'lucide-react';
 import { portfolioData } from '../data';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useTranslation } from '../contexts/TranslationContext';
 import { languageNames, LANGUAGES } from '../translations';
-import { Globe, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ContactForm from '../components/ContactForm';
 import CaseStudyCard from '../components/CaseStudyCard';
@@ -77,6 +78,7 @@ export default function HomePage() {
     };
 
     return {
+      id: p.id,
       title: getLocalizedField(p.title_uk, p.title_ru, p.title_en, p.title),
       client: p.client || '',
       category: getLocalizedField(p.category_uk, p.category_ru, p.category_en, p.category),
