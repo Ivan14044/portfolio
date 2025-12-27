@@ -3,13 +3,9 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, 
-  ExternalLink, 
-  CheckCircle2, 
   Briefcase, 
   User, 
   Layers,
-  ChevronLeft,
-  ChevronRight,
   X,
   Loader2,
   Maximize2
@@ -73,12 +69,6 @@ export default function ProjectPage() {
   const description = getLocalizedField(project.description_uk, project.description_ru, project.description_en, project.description);
   const services = getLocalizedField(project.services_uk, project.services_ru, project.services_en, project.services) || [];
   const content = getLocalizedField(project.content_uk, project.content_ru, project.content_en);
-
-  const allImages = [
-    project.before_image,
-    project.after_image,
-    ...(project.additional_images || [])
-  ].filter(Boolean);
 
   return (
     <div className="min-h-screen bg-[#080808] text-white selection:bg-[#FFB800]/40 font-sans">
