@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Mail, 
@@ -29,44 +29,6 @@ import type { DatabaseProject } from '../utils/supabase';
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
-
-export default function HomePage() {
-  const { language, setLanguage, t } = useTranslation();
-  const [activeSection, setActiveSection] = useState('home');
-  const [activeImage, setActiveImage] = useState('image_1');
-  const [blurLevel, setBlurLevel] = useState(0);
-  const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
-  
-  // Состояние для динамических проектов из Supabase
-  const [dbProjects, setDbProjects] = useState<DatabaseProject[]>([]);
-  const [isLoadingProjects, setIsLoadingProjects] = useState(true);
-
-  // Загрузка проектов из Supabase
-  useEffect(() => {
-    async function fetchProjects() {
-      console.log('🔄 Попытка загрузки проектов из Supabase...');
-      try {
-        const { data, error } = await supabase
-          .from('projects')
-          .select('*')
-          .order('created_at', { ascending: false });
-        
-        if (error) {
-          console.error('❌ Ошибка Supabase при загрузке:', error);
-          throw error;
-        }
-        
-        console.log('✅ Данные успешно получены. Количество проектов из БД:', data?.length || 0);
-        // Принудительно обновляем состояние, чтобы React перерисовал компоненты
-        setDbProjects([...(data || [])]);
-      } catch (err) {
-        console.error('⚠️ Критическая ошибка при загрузке данных:', err);
-      } finally {
-        setIsLoadingProjects(false);
-      }
-    }
-    fetchProjects();
-  }, [language]); // Перезагружаем при смене языка для надежности
 
 // Маппинг секций к изображениям
 const SECTION_IMAGES: Record<string, string> = {
@@ -121,8 +83,8 @@ export default function HomePage() {
     fetchProjects();
   }, []); 
 
-  // Оптимизированный расчет проектов (useMemo)
-  const displayProjects = useState(() => {
+  // Оптимизированный расчет проектов
+  const displayProjects = useMemo(() => {
     const getLocalizedField = (uk: any, ru: any, en: any, fallback?: any) => {
       if (language === 'uk') return uk || ru || en || fallback || '';
       if (language === 'ru') return ru || uk || en || fallback || '';
@@ -139,10 +101,7 @@ export default function HomePage() {
       beforeImage: p.before_image,
       afterImage: p.after_image,
     }));
-  })[0];
-
-  // Маппинг секций к изображениям
-  // Удаляем старые локальные константы из тела компонента
+  }, [dbProjects, language]);
 
   useEffect(() => {
     const sections = ['home', 'summary', 'experience', 'portfolio', 'skills', 'contact', 'links'];
@@ -174,7 +133,7 @@ export default function HomePage() {
     });
 
     return () => observer.disconnect();
-  }, [activeSection]); // Зависим только от activeSection
+  }, [activeSection]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -806,4 +765,3 @@ function SocialLink({ name, url }: { name: string, url: string }) {
     </motion.a>
   );
 }
-
