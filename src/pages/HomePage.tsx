@@ -116,8 +116,8 @@ export default function HomePage() {
     
     const observerOptions = {
       root: null,
-      rootMargin: '-20% 0px -20% 0px', // Срабатывает, когда секция в центре экрана
-      threshold: 0
+      rootMargin: '-10% 0px -10% 0px', // Уменьшил отступы для более стабильного срабатывания
+      threshold: 0.1 // Добавил порог, чтобы избежать дребезга
     };
 
     const observerCallback = (entries: IntersectionObserverEntry[]) => {
@@ -193,7 +193,7 @@ export default function HomePage() {
                 filter: blurLevel > 0 ? `blur(${blurLevel}px)` : 'none'
               }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.8, ease: "circOut" }}
+              transition={{ duration: 1.5, ease: "linear" }} // Сделал переход максимально плавным и линейным
               className="absolute inset-0 will-change-[filter,opacity]"
               style={{ transform: 'translateZ(0)' }}
             >
@@ -394,10 +394,11 @@ export default function HomePage() {
               </div>
             ) : (
               displayProjects.map((caseStudy, cj) => (
-                <CaseStudyCard 
-                  key={cj} 
-                  caseStudy={caseStudy}
-                />
+                <div key={caseStudy.id || cj}>
+                  <CaseStudyCard 
+                    caseStudy={caseStudy}
+                  />
+                </div>
               ))
             )}
           </div>

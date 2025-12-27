@@ -131,10 +131,7 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
   }, [isDragging]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
+    <div
       className="group relative aspect-[4/5] bg-[#141414] rounded-2xl overflow-hidden border border-white/5 hover:border-[#FFB800]/30 transition-all duration-500 shadow-xl"
     >
       <div
@@ -248,6 +245,6 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
           ))}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
-}
+};
