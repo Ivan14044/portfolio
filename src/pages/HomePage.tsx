@@ -68,16 +68,68 @@ export default function HomePage() {
     fetchProjects();
   }, [language]); // Перезагружаем при смене языка для надежности
 
-  // Только динамические проекты из базы данных
-  const displayProjects = (dbProjects || []).map(p => {
-    // Логика выбора языка для каждого поля
+// Маппинг секций к изображениям
+const SECTION_IMAGES: Record<string, string> = {
+  home: 'image_1',
+  summary: 'image_2',
+  experience: 'image_3',
+  portfolio: 'image_1',
+  skills: 'image_2',
+  contact: 'image_3',
+  links: 'image_1'
+};
+
+// Маппинг секций к уровню блюра (в пикселях)
+const SECTION_BLUR_MAP: Record<string, number> = {
+  home: 0,
+  summary: 8,
+  experience: 12,
+  portfolio: 6,
+  skills: 8,
+  contact: 6,
+  links: 4
+};
+
+export default function HomePage() {
+  const { language, setLanguage, t } = useTranslation();
+  const [activeSection, setActiveSection] = useState('home');
+  const [activeImage, setActiveImage] = useState('image_1');
+  const [blurLevel, setBlurLevel] = useState(0);
+  const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
+  
+  // Состояние для динамических проектов из Supabase
+  const [dbProjects, setDbProjects] = useState<DatabaseProject[]>([]);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(true);
+
+  // Загрузка проектов из Supabase
+  useEffect(() => {
+    async function fetchProjects() {
+      try {
+        const { data, error } = await supabase
+          .from('projects')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        setDbProjects(data || []);
+      } catch (err) {
+        console.error('⚠️ Ошибка при загрузке данных:', err);
+      } finally {
+        setIsLoadingProjects(false);
+      }
+    }
+    fetchProjects();
+  }, []); 
+
+  // Оптимизированный расчет проектов (useMemo)
+  const displayProjects = useState(() => {
     const getLocalizedField = (uk: any, ru: any, en: any, fallback?: any) => {
       if (language === 'uk') return uk || ru || en || fallback || '';
       if (language === 'ru') return ru || uk || en || fallback || '';
       return en || ru || uk || fallback || '';
     };
 
-    return {
+    return (dbProjects || []).map(p => ({
       id: p.id,
       title: getLocalizedField(p.title_uk, p.title_ru, p.title_en, p.title),
       client: p.client || '',
@@ -86,40 +138,19 @@ export default function HomePage() {
       services: getLocalizedField(p.services_uk, p.services_ru, p.services_en, p.services) || [],
       beforeImage: p.before_image,
       afterImage: p.after_image,
-    };
-  });
-
-  console.log('📊 Итоговое количество проектов для отображения:', displayProjects.length);
+    }));
+  })[0];
 
   // Маппинг секций к изображениям
-  const sectionImages: Record<string, string> = {
-    home: 'image_1',
-    summary: 'image_2',
-    experience: 'image_3',
-    portfolio: 'image_1',
-    skills: 'image_2',
-    contact: 'image_3',
-    links: 'image_1'
-  };
-
-  // Маппинг секций к уровню блюра (в пикселях)
-  const sectionBlurMap: Record<string, number> = {
-    home: 0,
-    summary: 8,
-    experience: 12,
-    portfolio: 6,
-    skills: 8,
-    contact: 6,
-    links: 4
-  };
+  // Удаляем старые локальные константы из тела компонента
 
   useEffect(() => {
     const sections = ['home', 'summary', 'experience', 'portfolio', 'skills', 'contact', 'links'];
     
     const observerOptions = {
       root: null,
-      rootMargin: '-10% 0px -10% 0px', // Уменьшил отступы для более стабильного срабатывания
-      threshold: 0.1 // Добавил порог, чтобы избежать дребезга
+      rootMargin: '-20% 0px -20% 0px',
+      threshold: 0.1
     };
 
     const observerCallback = (entries: IntersectionObserverEntry[]) => {
@@ -128,8 +159,8 @@ export default function HomePage() {
           const sectionId = entry.target.id;
           if (sectionId !== activeSection) {
             setActiveSection(sectionId);
-            setActiveImage(sectionImages[sectionId]);
-            setBlurLevel(sectionBlurMap[sectionId]);
+            setActiveImage(SECTION_IMAGES[sectionId]);
+            setBlurLevel(SECTION_BLUR_MAP[sectionId]);
           }
         }
       });
@@ -143,7 +174,7 @@ export default function HomePage() {
     });
 
     return () => observer.disconnect();
-  }, [sectionImages, sectionBlurMap]);
+  }, [activeSection]); // Зависим только от activeSection
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
