@@ -37,6 +37,12 @@ export interface DatabaseProject {
   services_ru: string[];
   services_en: string[];
   
+  // Новые поля для детальной страницы
+  additional_images?: string[];
+  content_uk?: string;
+  content_ru?: string;
+  content_en?: string;
+  
   before_image: string;
   after_image: string;
   created_at?: string;

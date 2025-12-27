@@ -27,12 +27,15 @@ export default function AdminPage() {
     category_uk: '', category_ru: '', category_en: '',
     description_uk: '', description_ru: '', description_en: '',
     services_uk: '', services_ru: '', services_en: '',
+    content_uk: '', content_ru: '', content_en: '',
   });
   
   const [beforeFile, setBeforeFile] = useState<File | null>(null);
   const [afterFile, setAfterFile] = useState<File | null>(null);
+  const [additionalFiles, setAdditionalFiles] = useState<File[]>([]);
   const [beforePreview, setBeforePreview] = useState<string | null>(null);
   const [afterPreview, setAfterPreview] = useState<string | null>(null);
+  const [additionalPreviews, setAdditionalPreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
@@ -113,9 +116,13 @@ export default function AdminPage() {
       services_uk: project.services_uk?.join(', ') || project.services?.join(', ') || '',
       services_ru: project.services_ru?.join(', ') || project.services?.join(', ') || '',
       services_en: project.services_en?.join(', ') || project.services?.join(', ') || '',
+      content_uk: project.content_uk || '',
+      content_ru: project.content_ru || '',
+      content_en: project.content_en || '',
     });
     setBeforePreview(project.before_image);
     setAfterPreview(project.after_image);
+    setAdditionalPreviews(project.additional_images || []);
     setIsAdding(true);
   };
 
@@ -129,11 +136,14 @@ export default function AdminPage() {
       category_uk: '', category_ru: '', category_en: '',
       description_uk: '', description_ru: '', description_en: '',
       services_uk: '', services_ru: '', services_en: '',
+      content_uk: '', content_ru: '', content_en: '',
     });
     setBeforeFile(null);
     setAfterFile(null);
+    setAdditionalFiles([]);
     setBeforePreview(null);
     setAfterPreview(null);
+    setAdditionalPreviews([]);
     setError('');
   };
 
@@ -159,6 +169,19 @@ export default function AdminPage() {
         afterUrl = await handleUpload(afterFile, 'after');
       }
 
+      // Загрузка дополнительных фото
+      const uploadedAdditionalUrls = [];
+      for (const file of additionalFiles) {
+        const url = await handleUpload(file, 'extra');
+        uploadedAdditionalUrls.push(url);
+      }
+
+      // Комбинируем новые загруженные фото с уже существующими (при редактировании)
+      const finalAdditionalImages = [
+        ...additionalPreviews.filter(url => !url.startsWith('blob:')), // Сохраняем старые URL (не превью)
+        ...uploadedAdditionalUrls
+      ];
+
       const projectData = {
         title_uk: newProject.title_uk,
         title_ru: newProject.title_ru,
@@ -173,8 +196,12 @@ export default function AdminPage() {
         services_uk: newProject.services_uk.split(',').map(s => s.trim()).filter(s => s !== ''),
         services_ru: newProject.services_ru.split(',').map(s => s.trim()).filter(s => s !== ''),
         services_en: newProject.services_en.split(',').map(s => s.trim()).filter(s => s !== ''),
+        content_uk: newProject.content_uk,
+        content_ru: newProject.content_ru,
+        content_en: newProject.content_en,
         before_image: beforeUrl,
         after_image: afterUrl,
+        additional_images: finalAdditionalImages,
       };
 
       if (editMode && editingId) {
@@ -423,9 +450,22 @@ export default function AdminPage() {
                 </label>
                 <textarea
                   required
-                  rows={4}
+                  rows={3}
                   value={newProject[`description_${activeLang}` as keyof typeof newProject]}
                   onChange={e => setNewProject({...newProject, [`description_${activeLang}`]: e.target.value})}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors resize-none"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/60 flex items-center gap-2">
+                  <Languages size={14} className="text-[#FFB800]" /> Расширенная история кейса ({activeLang.toUpperCase()})
+                </label>
+                <textarea
+                  rows={6}
+                  value={newProject[`content_${activeLang}` as keyof typeof newProject]}
+                  onChange={e => setNewProject({...newProject, [`content_${activeLang}`]: e.target.value})}
+                  placeholder="Опишите детали работы, сложности и результаты для детальной страницы..."
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors resize-none"
                 />
               </div>
@@ -472,6 +512,58 @@ export default function AdminPage() {
                     }} />
                   </label>
                   {(afterFile || afterPreview) && <p className="text-[10px] text-white/20 text-center">Нажмите, чтобы изменить</p>}
+                </div>
+              </div>
+
+              {/* Дополнительные изображения */}
+              <div className="space-y-4 pt-4 border-t border-white/5">
+                <label className="text-sm font-medium text-white/60 uppercase tracking-widest">Галерея дополнительных фото</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                  {/* Существующие и новые превью */}
+                  {additionalPreviews.map((url, idx) => (
+                    <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-white/10 group">
+                      <img src={url} className="w-full h-full object-cover" alt={`Extra ${idx}`} />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newPreviews = [...additionalPreviews];
+                          newPreviews.splice(idx, 1);
+                          setAdditionalPreviews(newPreviews);
+                          
+                          // Если это был только что выбранный файл, удаляем его и из списка файлов
+                          if (url.startsWith('blob:')) {
+                            const fileIdx = additionalFiles.findIndex(f => URL.createObjectURL(f) === url);
+                            if (fileIdx !== -1) {
+                              const newFiles = [...additionalFiles];
+                              newFiles.splice(fileIdx, 1);
+                              setAdditionalFiles(newFiles);
+                            }
+                          }
+                        }}
+                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  
+                  {/* Кнопка добавления */}
+                  <label className="aspect-square rounded-xl border-2 border-dashed border-white/10 hover:border-[#FFB800]/30 transition-all flex flex-col items-center justify-center cursor-pointer bg-white/5">
+                    <Plus size={24} className="text-white/20" />
+                    <span className="text-[10px] text-white/20 font-bold uppercase mt-2">Добавить</span>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      className="hidden"
+                      onChange={e => {
+                        const files = Array.from(e.target.files || []);
+                        setAdditionalFiles(prev => [...prev, ...files]);
+                        const newPreviews = files.map(f => URL.createObjectURL(f));
+                        setAdditionalPreviews(prev => [...prev, ...newPreviews]);
+                      }}
+                    />
+                  </label>
                 </div>
               </div>
 

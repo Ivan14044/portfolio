@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from '../contexts/TranslationContext';
+import { Maximize2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export interface CaseStudy {
   id?: string;
@@ -216,6 +218,18 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
             </span>
           </div>
         </div>
+
+        {/* Кнопка перехода к деталям */}
+        {caseStudy.id && (
+          <Link
+            to={`/project/${caseStudy.id}`}
+            className="absolute bottom-6 right-6 z-30 w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group/btn hover:bg-[#FFB800] transition-all duration-300 pointer-events-auto shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+            title="Смотреть детали кейса"
+          >
+            <Maximize2 className="w-5 h-5 text-white group-hover/btn:text-black transition-colors" />
+          </Link>
+        )}
 
         {/* Overlay gradient для лучшей читаемости текста */}
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10 pointer-events-none" />
