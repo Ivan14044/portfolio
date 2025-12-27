@@ -27,7 +27,6 @@ export default function AdminPage() {
     telegram_user: '',
     phone: '',
   });
-  const [isSettingsLoading, setIsSettingsLoading] = useState(false);
   
   // Состояния для редактирования
   const [editMode, setEditMode] = useState(false);
@@ -80,7 +79,6 @@ export default function AdminPage() {
   };
 
   const fetchSettings = async () => {
-    setIsSettingsLoading(true);
     try {
       const { data, error } = await supabase
         .from('site_settings')
@@ -94,8 +92,8 @@ export default function AdminPage() {
       } else if (data) {
         setSettings(data);
       }
-    } finally {
-      setIsSettingsLoading(false);
+    } catch (err) {
+      console.error('Error in fetchSettings:', err);
     }
   };
 
@@ -434,302 +432,304 @@ export default function AdminPage() {
 
       <main className="max-w-7xl mx-auto px-4 py-10">
         {adminTab === 'projects' ? (
-          <>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
-          <div>
-            <h1 className="text-3xl font-bold mb-1">Проекты</h1>
-            <p className="text-white/40">Управление вашим портфолио</p>
-          </div>
-          <button
-            onClick={() => isAdding ? resetForm() : setIsAdding(true)}
-            className="flex items-center justify-center gap-2 bg-[#FFB800] text-black font-bold px-6 py-3 rounded-2xl hover:bg-white transition-all shadow-lg shadow-[#FFB800]/10"
-          >
-            {isAdding ? <ArrowLeft size={20} /> : <Plus size={20} />}
-            {isAdding ? 'Назад к списку' : 'Добавить кейс'}
-          </button>
-        </div>
-
-        {isAdding ? (
-          <div className="max-w-4xl bg-[#141414] border border-white/10 rounded-3xl p-8 shadow-2xl">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                {editMode ? <Pencil className="text-[#FFB800]" /> : <Plus className="text-[#FFB800]" />}
-                {editMode ? 'Редактировать проект' : 'Новый проект'}
-              </h2>
-              <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
-                {(['uk', 'ru', 'en'] as const).map(l => (
-                  <button
-                    key={l}
-                    onClick={() => setActiveLang(l)}
-                    className={`px-4 py-2 rounded-lg text-xs font-bold uppercase transition-all ${activeLang === l ? 'bg-[#FFB800] text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
-                  >
-                    {l}
-                  </button>
-                ))}
+          <div className="space-y-10">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-bold mb-1">Проекты</h1>
+                <p className="text-white/40">Управление вашим портфолио</p>
               </div>
+              <button
+                onClick={() => isAdding ? resetForm() : setIsAdding(true)}
+                className="flex items-center justify-center gap-2 bg-[#FFB800] text-black font-bold px-6 py-3 rounded-2xl hover:bg-white transition-all shadow-lg shadow-[#FFB800]/10"
+              >
+                {isAdding ? <ArrowLeft size={20} /> : <Plus size={20} />}
+                {isAdding ? 'Назад к списку' : 'Добавить кейс'}
+              </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-white/60 flex items-center gap-2">
-                      <Languages size={14} className="text-[#FFB800]" /> Название ({activeLang.toUpperCase()})
-                    </label>
-                    <input
-                      required
-                      value={newProject[`title_${activeLang}` as keyof typeof newProject]}
-                      onChange={e => setNewProject({...newProject, [`title_${activeLang}`]: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-white/60">Клиент (общий)</label>
-                    <input
-                      required
-                      value={newProject.client}
-                      onChange={e => setNewProject({...newProject, client: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-white/60 flex items-center gap-2">
-                      <Languages size={14} className="text-[#FFB800]" /> Категория ({activeLang.toUpperCase()})
-                    </label>
-                    <input
-                      required
-                      value={newProject[`category_${activeLang}` as keyof typeof newProject]}
-                      onChange={e => setNewProject({...newProject, [`category_${activeLang}`]: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-white/60 flex items-center gap-2">
-                      <Languages size={14} className="text-[#FFB800]" /> Услуги ({activeLang.toUpperCase()})
-                    </label>
-                    <input
-                      required
-                      value={newProject[`services_${activeLang}` as keyof typeof newProject]}
-                      onChange={e => setNewProject({...newProject, [`services_${activeLang}`]: e.target.value})}
-                      placeholder="Через запятую"
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white/60 flex items-center gap-2">
-                  <Languages size={14} className="text-[#FFB800]" /> Описание ({activeLang.toUpperCase()})
-                </label>
-                <textarea
-                  required
-                  rows={3}
-                  value={newProject[`description_${activeLang}` as keyof typeof newProject]}
-                  onChange={e => setNewProject({...newProject, [`description_${activeLang}`]: e.target.value})}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors resize-none"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white/60 flex items-center gap-2">
-                  <Languages size={14} className="text-[#FFB800]" /> Расширенная история кейса ({activeLang.toUpperCase()})
-                </label>
-                <textarea
-                  rows={6}
-                  value={newProject[`content_${activeLang}` as keyof typeof newProject]}
-                  onChange={e => setNewProject({...newProject, [`content_${activeLang}`]: e.target.value})}
-                  placeholder="Опишите детали работы, сложности и результаты для детальной страницы..."
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors resize-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/5">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/60 uppercase tracking-widest">Фото ДО</label>
-                  <label className="group relative block aspect-[4/3] cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed border-white/10 hover:border-[#FFB800]/30 transition-all">
-                    {beforeFile ? (
-                      <img src={URL.createObjectURL(beforeFile)} className="h-full w-full object-cover" alt="Before preview" />
-                    ) : beforePreview ? (
-                      <img src={beforePreview} className="h-full w-full object-cover" alt="Current before" />
-                    ) : (
-                      <div className="flex h-full flex-col items-center justify-center gap-3 bg-white/5">
-                        <ImageIcon className="text-white/20 group-hover:text-[#FFB800]" size={32} />
-                        <span className="text-[10px] text-white/20 font-bold uppercase">Загрузить</span>
-                      </div>
-                    )}
-                    <input type="file" accept="image/*" className="hidden" onChange={e => {
-                      const file = e.target.files?.[0] || null;
-                      setBeforeFile(file);
-                      if (file) setBeforePreview(URL.createObjectURL(file));
-                    }} />
-                  </label>
-                  {(beforeFile || beforePreview) && <p className="text-[10px] text-white/20 text-center">Нажмите, чтобы изменить</p>}
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/60 uppercase tracking-widest">Фото ПОСЛЕ</label>
-                  <label className="group relative block aspect-[4/3] cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed border-white/10 hover:border-[#FFB800]/30 transition-all">
-                    {afterFile ? (
-                      <img src={URL.createObjectURL(afterFile)} className="h-full w-full object-cover" alt="After preview" />
-                    ) : afterPreview ? (
-                      <img src={afterPreview} className="h-full w-full object-cover" alt="Current after" />
-                    ) : (
-                      <div className="flex h-full flex-col items-center justify-center gap-3 bg-white/5">
-                        <ImageIcon className="text-white/20 group-hover:text-[#FFB800]" size={32} />
-                        <span className="text-[10px] text-white/20 font-bold uppercase">Загрузить</span>
-                      </div>
-                    )}
-                    <input type="file" accept="image/*" className="hidden" onChange={e => {
-                      const file = e.target.files?.[0] || null;
-                      setAfterFile(file);
-                      if (file) setAfterPreview(URL.createObjectURL(file));
-                    }} />
-                  </label>
-                  {(afterFile || afterPreview) && <p className="text-[10px] text-white/20 text-center">Нажмите, чтобы изменить</p>}
-                </div>
-              </div>
-
-              {/* Дополнительные изображения */}
-              <div className="space-y-4 pt-4 border-t border-white/5">
-                <label className="text-sm font-medium text-white/60 uppercase tracking-widest">Галерея дополнительных фото</label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4">
-                  {/* Существующие и новые превью */}
-                  {additionalPreviews.map((url, idx) => (
-                    <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-white/10 group">
-                      <img src={url} className="w-full h-full object-cover" alt={`Extra ${idx}`} />
+            {isAdding ? (
+              <div className="max-w-4xl bg-[#141414] border border-white/10 rounded-3xl p-8 shadow-2xl">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    {editMode ? <Pencil className="text-[#FFB800]" /> : <Plus className="text-[#FFB800]" />}
+                    {editMode ? 'Редактировать проект' : 'Новый проект'}
+                  </h2>
+                  <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
+                    {(['uk', 'ru', 'en'] as const).map(l => (
                       <button
-                        type="button"
-                        onClick={() => {
-                          const newPreviews = [...additionalPreviews];
-                          newPreviews.splice(idx, 1);
-                          setAdditionalPreviews(newPreviews);
-                          
-                          // Если это был только что выбранный файл, удаляем его и из списка файлов
-                          if (url.startsWith('blob:')) {
-                            const fileIdx = additionalFiles.findIndex(f => URL.createObjectURL(f) === url);
-                            if (fileIdx !== -1) {
-                              const newFiles = [...additionalFiles];
-                              newFiles.splice(fileIdx, 1);
-                              setAdditionalFiles(newFiles);
-                            }
-                          }
-                        }}
-                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                        key={l}
+                        onClick={() => setActiveLang(l)}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold uppercase transition-all ${activeLang === l ? 'bg-[#FFB800] text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
                       >
-                        <Trash2 size={14} />
+                        {l}
                       </button>
+                    ))}
+                  </div>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-white/60 flex items-center gap-2">
+                          <Languages size={14} className="text-[#FFB800]" /> Название ({activeLang.toUpperCase()})
+                        </label>
+                        <input
+                          required
+                          value={newProject[`title_${activeLang}` as keyof typeof newProject]}
+                          onChange={e => setNewProject({...newProject, [`title_${activeLang}`]: e.target.value})}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-white/60">Клиент (общий)</label>
+                        <input
+                          required
+                          value={newProject.client}
+                          onChange={e => setNewProject({...newProject, client: e.target.value})}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
+                        />
+                      </div>
                     </div>
-                  ))}
-                  
-                  {/* Кнопка добавления */}
-                  <label className="aspect-square rounded-xl border-2 border-dashed border-white/10 hover:border-[#FFB800]/30 transition-all flex flex-col items-center justify-center cursor-pointer bg-white/5">
-                    <Plus size={24} className="text-white/20" />
-                    <span className="text-[10px] text-white/20 font-bold uppercase mt-2">Добавить</span>
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      className="hidden"
-                      onChange={e => {
-                        const files = Array.from(e.target.files || []);
-                        setAdditionalFiles(prev => [...prev, ...files]);
-                        const newPreviews = files.map(f => URL.createObjectURL(f));
-                        setAdditionalPreviews(prev => [...prev, ...newPreviews]);
-                      }}
+
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-white/60 flex items-center gap-2">
+                          <Languages size={14} className="text-[#FFB800]" /> Категория ({activeLang.toUpperCase()})
+                        </label>
+                        <input
+                          required
+                          value={newProject[`category_${activeLang}` as keyof typeof newProject]}
+                          onChange={e => setNewProject({...newProject, [`category_${activeLang}`]: e.target.value})}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-white/60 flex items-center gap-2">
+                          <Languages size={14} className="text-[#FFB800]" /> Услуги ({activeLang.toUpperCase()})
+                        </label>
+                        <input
+                          required
+                          value={newProject[`services_${activeLang}` as keyof typeof newProject]}
+                          onChange={e => setNewProject({...newProject, [`services_${activeLang}`]: e.target.value})}
+                          placeholder="Через запятую"
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-white/60 flex items-center gap-2">
+                      <Languages size={14} className="text-[#FFB800]" /> Описание ({activeLang.toUpperCase()})
+                    </label>
+                    <textarea
+                      required
+                      rows={3}
+                      value={newProject[`description_${activeLang}` as keyof typeof newProject]}
+                      onChange={e => setNewProject({...newProject, [`description_${activeLang}`]: e.target.value})}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors resize-none"
                     />
-                  </label>
-                </div>
-              </div>
+                  </div>
 
-              {error && (
-                <div className="flex items-center gap-2 text-red-400 text-sm bg-red-400/10 p-4 rounded-xl border border-red-400/20">
-                  <AlertCircle size={18} />
-                  <span>{error}</span>
-                </div>
-              )}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-white/60 flex items-center gap-2">
+                      <Languages size={14} className="text-[#FFB800]" /> Расширенная история кейса ({activeLang.toUpperCase()})
+                    </label>
+                    <textarea
+                      rows={6}
+                      value={newProject[`content_${activeLang}` as keyof typeof newProject]}
+                      onChange={e => setNewProject({...newProject, [`content_${activeLang}`]: e.target.value})}
+                      placeholder="Опишите детали работы, сложности и результаты для детальной страницы..."
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors resize-none"
+                    />
+                  </div>
 
-              <button
-                type="submit"
-                disabled={uploading}
-                className="w-full bg-white text-black font-black py-5 rounded-2xl hover:bg-[#FFB800] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-              >
-                {uploading ? <Loader2 className="animate-spin" /> : editMode ? <Check size={24} /> : <Check size={24} />}
-                {uploading ? 'СОХРАНЕНИЕ...' : editMode ? 'ОБНОВИТЬ ПРОЕКТ' : 'ОПУБЛИКОВАТЬ КЕЙС'}
-              </button>
-            </form>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {loading ? (
-              <div className="col-span-full py-20 flex flex-col items-center justify-center text-white/20">
-                <Loader2 className="animate-spin mb-4" size={40} />
-                <p>Загрузка данных...</p>
-              </div>
-            ) : projects.length === 0 ? (
-              <div className="col-span-full py-20 bg-[#141414] rounded-3xl border border-white/5 flex flex-col items-center justify-center text-center px-6">
-                <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 mx-auto">
-                  <Database size={40} className="text-white/10" />
-                </div>
-                <h3 className="text-xl font-bold mb-2">База данных пуста</h3>
-                <p className="text-white/40 mb-8 max-w-sm mx-auto">
-                  Вы можете начать добавлять свои проекты вручную или импортировать стандартные кейсы-заглушки.
-                </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                  <button 
-                    onClick={() => setIsAdding(true)} 
-                    className="flex items-center gap-2 bg-[#FFB800] text-black font-bold px-8 py-4 rounded-2xl hover:bg-white transition-all w-full sm:w-auto"
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/5">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-white/60 uppercase tracking-widest">Фото ДО</label>
+                      <label className="group relative block aspect-[4/3] cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed border-white/10 hover:border-[#FFB800]/30 transition-all">
+                        {beforeFile ? (
+                          <img src={URL.createObjectURL(beforeFile)} className="h-full w-full object-cover" alt="Before preview" />
+                        ) : beforePreview ? (
+                          <img src={beforePreview} className="h-full w-full object-cover" alt="Current before" />
+                        ) : (
+                          <div className="flex h-full flex-col items-center justify-center gap-3 bg-white/5">
+                            <ImageIcon className="text-white/20 group-hover:text-[#FFB800]" size={32} />
+                            <span className="text-[10px] text-white/20 font-bold uppercase">Загрузить</span>
+                          </div>
+                        )}
+                        <input type="file" accept="image/*" className="hidden" onChange={e => {
+                          const file = e.target.files?.[0] || null;
+                          setBeforeFile(file);
+                          if (file) setBeforePreview(URL.createObjectURL(file));
+                        }} />
+                      </label>
+                      {(beforeFile || beforePreview) && <p className="text-[10px] text-white/20 text-center">Нажмите, чтобы изменить</p>}
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-white/60 uppercase tracking-widest">Фото ПОСЛЕ</label>
+                      <label className="group relative block aspect-[4/3] cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed border-white/10 hover:border-[#FFB800]/30 transition-all">
+                        {afterFile ? (
+                          <img src={URL.createObjectURL(afterFile)} className="h-full w-full object-cover" alt="After preview" />
+                        ) : afterPreview ? (
+                          <img src={afterPreview} className="h-full w-full object-cover" alt="Current after" />
+                        ) : (
+                          <div className="flex h-full flex-col items-center justify-center gap-3 bg-white/5">
+                            <ImageIcon className="text-white/20 group-hover:text-[#FFB800]" size={32} />
+                            <span className="text-[10px] text-white/20 font-bold uppercase">Загрузить</span>
+                          </div>
+                        )}
+                        <input type="file" accept="image/*" className="hidden" onChange={e => {
+                          const file = e.target.files?.[0] || null;
+                          setAfterFile(file);
+                          if (file) setAfterPreview(URL.createObjectURL(file));
+                        }} />
+                      </label>
+                      {(afterFile || afterPreview) && <p className="text-[10px] text-white/20 text-center">Нажмите, чтобы изменить</p>}
+                    </div>
+                  </div>
+
+                  {/* Дополнительные изображения */}
+                  <div className="space-y-4 pt-4 border-t border-white/5">
+                    <label className="text-sm font-medium text-white/60 uppercase tracking-widest">Галерея дополнительных фото</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                      {/* Существующие и новые превью */}
+                      {additionalPreviews.map((url, idx) => (
+                        <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-white/10 group">
+                          <img src={url} className="w-full h-full object-cover" alt={`Extra ${idx}`} />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newPreviews = [...additionalPreviews];
+                              newPreviews.splice(idx, 1);
+                              setAdditionalPreviews(newPreviews);
+                              
+                              // Если это был только что выбранный файл, удаляем его и из списка файлов
+                              if (url.startsWith('blob:')) {
+                                const fileIdx = additionalFiles.findIndex(f => URL.createObjectURL(f) === url);
+                                if (fileIdx !== -1) {
+                                  const newFiles = [...additionalFiles];
+                                  newFiles.splice(fileIdx, 1);
+                                  setAdditionalFiles(newFiles);
+                                }
+                              }
+                            }}
+                            className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                      
+                      {/* Кнопка добавления */}
+                      <label className="aspect-square rounded-xl border-2 border-dashed border-white/10 hover:border-[#FFB800]/30 transition-all flex flex-col items-center justify-center cursor-pointer bg-white/5">
+                        <Plus size={24} className="text-white/20" />
+                        <span className="text-[10px] text-white/20 font-bold uppercase mt-2">Добавить</span>
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          className="hidden"
+                          onChange={e => {
+                            const files = Array.from(e.target.files || []);
+                            setAdditionalFiles(prev => [...prev, ...files]);
+                            const newPreviews = files.map(f => URL.createObjectURL(f));
+                            setAdditionalPreviews(prev => [...prev, ...newPreviews]);
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  {error && (
+                    <div className="flex items-center gap-2 text-red-400 text-sm bg-red-400/10 p-4 rounded-xl border border-red-400/20">
+                      <AlertCircle size={18} />
+                      <span>{error}</span>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={uploading}
+                    className="w-full bg-white text-black font-black py-5 rounded-2xl hover:bg-[#FFB800] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                   >
-                    <Plus size={20} /> Создать первый кейс
+                    {uploading ? <Loader2 className="animate-spin" /> : <Check size={24} />}
+                    {uploading ? 'СОХРАНЕНИЕ...' : editMode ? 'ОБНОВИТЬ ПРОЕКТ' : 'ОПУБЛИКОВАТЬ КЕЙС'}
                   </button>
-                  <button 
-                    onClick={migrateData} 
-                    className="flex items-center gap-2 bg-white/5 border border-white/10 text-white font-bold px-8 py-4 rounded-2xl hover:bg-white/10 transition-all w-full sm:w-auto"
-                  >
-                    <Database size={20} /> Импорт заглушек
-                  </button>
-                </div>
+                </form>
               </div>
             ) : (
-              projects.map(project => (
-                <div key={project.id} className="group bg-[#141414] border border-white/10 rounded-2xl overflow-hidden hover:border-[#FFB800]/30 transition-all flex flex-col">
-                  <div className="relative aspect-[4/3] overflow-hidden">
-                    <img src={project.after_image} alt={project.title_ru} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end justify-between p-4">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleEdit(project)}
-                          className="bg-white text-black p-2.5 rounded-xl hover:bg-[#FFB800] transition-colors shadow-lg flex items-center gap-2 font-bold text-xs"
-                        >
-                          <Pencil size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(project.id)}
-                          className="bg-red-500/20 backdrop-blur-md text-red-500 border border-red-500/30 p-2.5 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-lg"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {loading ? (
+                  <div className="col-span-full py-20 flex flex-col items-center justify-center text-white/20">
+                    <Loader2 className="animate-spin mb-4" size={40} />
+                    <p>Загрузка данных...</p>
+                  </div>
+                ) : projects.length === 0 ? (
+                  <div className="col-span-full py-20 bg-[#141414] rounded-3xl border border-white/5 flex flex-col items-center justify-center text-center px-6">
+                    <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 mx-auto">
+                      <Database size={40} className="text-white/10" />
+                    </div>
+                    <h3 className="text-xl font-bold mb-2">База данных пуста</h3>
+                    <p className="text-white/40 mb-8 max-w-sm mx-auto">
+                      Вы можете начать добавлять свои проекты вручную или импортировать стандартные кейсы-заглушки.
+                    </p>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                      <button 
+                        onClick={() => setIsAdding(true)} 
+                        className="flex items-center gap-2 bg-[#FFB800] text-black font-bold px-8 py-4 rounded-2xl hover:bg-white transition-all w-full sm:w-auto"
+                      >
+                        <Plus size={20} /> Создать первый кейс
+                      </button>
+                      <button 
+                        onClick={migrateData} 
+                        className="flex items-center gap-2 bg-white/5 border border-white/10 text-white font-bold px-8 py-4 rounded-2xl hover:bg-white/10 transition-all w-full sm:w-auto"
+                      >
+                        <Database size={20} /> Импорт заглушек
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  projects.map(project => (
+                    <div key={project.id} className="group bg-[#141414] border border-white/10 rounded-2xl overflow-hidden hover:border-[#FFB800]/30 transition-all flex flex-col">
+                      <div className="relative aspect-[4/3] overflow-hidden">
+                        <img src={project.after_image} alt={project.title_ru} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end justify-between p-4">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleEdit(project)}
+                              className="bg-white text-black p-2.5 rounded-xl hover:bg-[#FFB800] transition-colors shadow-lg flex items-center gap-2 font-bold text-xs"
+                            >
+                              <Pencil size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(project.id)}
+                              className="bg-red-500/20 backdrop-blur-md text-red-500 border border-red-500/30 p-2.5 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-lg"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-5 flex-1 flex flex-col">
+                        <h3 className="font-bold text-lg mb-1 leading-tight line-clamp-1">{project.title_ru || project.title_uk || project.title_en}</h3>
+                        <p className="text-white/40 text-[10px] mb-3 uppercase tracking-[0.2em] font-black">{project.category_ru}</p>
+                        <p className="text-white/60 text-sm line-clamp-2 mb-4 leading-relaxed font-medium">{project.description_ru}</p>
+                        <div className="mt-auto flex flex-wrap gap-2">
+                          {project.services_ru?.slice(0, 3).map((s, i) => (
+                            <span key={i} className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[9px] text-white/40 uppercase font-black">
+                              {s}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="p-5 flex-1 flex flex-col">
-                    <h3 className="font-bold text-lg mb-1 leading-tight line-clamp-1">{project.title_ru || project.title_uk || project.title_en}</h3>
-                    <p className="text-white/40 text-[10px] mb-3 uppercase tracking-[0.2em] font-black">{project.category_ru}</p>
-                    <p className="text-white/60 text-sm line-clamp-2 mb-4 leading-relaxed font-medium">{project.description_ru}</p>
-                    <div className="mt-auto flex flex-wrap gap-2">
-                      {project.services_ru?.slice(0, 3).map((s, i) => (
-                        <span key={i} className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[9px] text-white/40 uppercase font-black">
-                          {s}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))
+                  ))
+                )}
+              </div>
             )}
-          </>
+          </div>
         ) : (
           <div className="max-w-4xl">
             <div className="mb-10">
