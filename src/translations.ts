@@ -13,7 +13,7 @@ export const translations = {
     ],
     experience: [
       {
-        role: "Senior Photo Editor | E-commerce Specialist",
+        role: "Senior Photo Editor | Спеціаліст з E-commerce",
         period: "2022 - До сьогодні",
         company: "Creative Media Lab",
         description: "Спеціалізуюся на обробці товарних фото для великих брендів у нішах Fashion, Beauty та Tech. Працюю з Instagram магазинами та маркетплейсами, забезпечуючи професійну обробку карток товарів, каталогів та контенту для соцмереж.",
@@ -29,7 +29,7 @@ export const translations = {
         ]
       },
       {
-        role: "Photo Retoucher | E-commerce Editor",
+        role: "Ретушер фото | Редактор E-commerce",
         period: "2019 - 2022",
         company: "Digital Trend Agency",
         description: "Спеціалізувалася на обробці фотографій для клієнтів агентства. Працювала з товарними фото для e-commerce, ретушшю та кольорокорекцією для соціальних мереж та каталогів.",
@@ -46,13 +46,13 @@ export const translations = {
       }
     ],
     skills: [
-      "Photo Retouching",
-      "Color Grading",
-      "E-commerce Photography",
-      "Product Photo Editing",
-      "Catalog Design",
-      "Background Removal",
-      "Photo Optimization"
+      "Ретуш фотографій",
+      "Кольорокорекція",
+      "E-commerce фотографія",
+      "Обробка товарних фото",
+      "Дизайн каталогів",
+      "Видалення фону",
+      "Оптимізація зображень"
     ],
     nav: {
       home: "Головна",
@@ -239,7 +239,7 @@ export const translations = {
     ],
     experience: [
       {
-        role: "Senior Photo Editor | E-commerce Specialist",
+        role: "Senior Photo Editor | Специалист по E-commerce",
         period: "2022 - Настоящее время",
         company: "Creative Media Lab",
         description: "Специализируюсь на обработке товарных фото для крупных брендов в нишах Fashion, Beauty и Tech. Работаю с Instagram магазинами и маркетплейсами, обеспечивая профессиональную обработку карточек товаров, каталогов и контента для соцсетей.",
@@ -255,7 +255,7 @@ export const translations = {
         ]
       },
       {
-        role: "Photo Retoucher | E-commerce Editor",
+        role: "Ретушер фото | Редактор E-commerce",
         period: "2019 - 2022",
         company: "Digital Trend Agency",
         description: "Специализировалась на обработке фотографий для клиентов агентства. Работала с товарными фото для e-commerce, ретушью и цветокоррекцией для социальных сетей и каталогов.",
@@ -272,13 +272,13 @@ export const translations = {
       }
     ],
     skills: [
-      "Photo Retouching",
-      "Color Grading",
-      "E-commerce Photography",
-      "Product Photo Editing",
-      "Catalog Design",
-      "Background Removal",
-      "Photo Optimization"
+      "Ретушь фотографий",
+      "Цветокоррекция",
+      "E-commerce фотография",
+      "Обработка товарных фото",
+      "Дизайн каталогов",
+      "Удаление фона",
+      "Оптимизация изображений"
     ],
     nav: {
       home: "Главная",
