@@ -48,3 +48,15 @@ export interface DatabaseProject {
   created_at?: string;
 }
 
+export interface SiteSettings {
+  id?: string;
+  email: string;
+  location_uk: string;
+  location_ru: string;
+  location_en: string;
+  instagram_url: string;
+  telegram_user: string;
+  phone: string;
+  updated_at?: string;
+}
+

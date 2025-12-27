@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
-import type { DatabaseProject } from '../utils/supabase';
-import { LogOut, Plus, Trash2, Image as ImageIcon, Check, AlertCircle, Loader2, ArrowLeft, Languages, Pencil, Database } from 'lucide-react';
+import type { DatabaseProject, SiteSettings } from '../utils/supabase';
+import { LogOut, Plus, Trash2, Image as ImageIcon, Check, AlertCircle, Loader2, ArrowLeft, Languages, Pencil, Database, Settings, Mail, MapPin, Instagram, Send, Phone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { portfolioData } from '../data';
 
@@ -15,6 +15,19 @@ export default function AdminPage() {
   const [projects, setProjects] = useState<DatabaseProject[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [activeLang, setActiveLang] = useState<Lang>('uk');
+  const [adminTab, setAdminTab] = useState<'projects' | 'settings'>('projects');
+  
+  // Состояние для настроек сайта
+  const [settings, setSettings] = useState<SiteSettings>({
+    email: '',
+    location_uk: '',
+    location_ru: '',
+    location_en: '',
+    instagram_url: '',
+    telegram_user: '',
+    phone: '',
+  });
+  const [isSettingsLoading, setIsSettingsLoading] = useState(false);
   
   // Состояния для редактирования
   const [editMode, setEditMode] = useState(false);
@@ -43,6 +56,7 @@ export default function AdminPage() {
     if (auth === 'true') {
       setIsAuthenticated(true);
       fetchProjects();
+      fetchSettings();
     }
   }, []);
 
@@ -54,6 +68,7 @@ export default function AdminPage() {
       localStorage.setItem('admin_auth', 'true');
       setError('');
       fetchProjects();
+      fetchSettings();
     } else {
       setError('Неверный пароль');
     }
@@ -62,6 +77,49 @@ export default function AdminPage() {
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem('admin_auth');
+  };
+
+  const fetchSettings = async () => {
+    setIsSettingsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('*')
+        .single();
+      
+      if (error) {
+        if (error.code !== 'PGRST116') { // PGRST116 is empty result
+          console.error('Error fetching settings:', error);
+        }
+      } else if (data) {
+        setSettings(data);
+      }
+    } finally {
+      setIsSettingsLoading(false);
+    }
+  };
+
+  const handleSettingsSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUploading(true);
+    setError('');
+
+    try {
+      const { error } = await supabase
+        .from('site_settings')
+        .upsert({
+          id: settings.id || '00000000-0000-0000-0000-000000000001',
+          ...settings,
+          updated_at: new Date().toISOString(),
+        });
+
+      if (error) throw error;
+      alert('Настройки успешно сохранены!');
+    } catch (err: any) {
+      setError(err.message || 'Ошибка при сохранении настроек');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const fetchProjects = async () => {
@@ -339,6 +397,23 @@ export default function AdminPage() {
               <span className="text-[10px] text-white/40 uppercase tracking-widest">Portfolio Manager</span>
             </div>
           </div>
+
+          <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 mx-4">
+            <button
+              onClick={() => setAdminTab('projects')}
+              className={`px-6 py-2 rounded-lg text-xs font-bold uppercase transition-all flex items-center gap-2 ${adminTab === 'projects' ? 'bg-[#FFB800] text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
+            >
+              <Database size={14} />
+              Кейсы
+            </button>
+            <button
+              onClick={() => setAdminTab('settings')}
+              className={`px-6 py-2 rounded-lg text-xs font-bold uppercase transition-all flex items-center gap-2 ${adminTab === 'settings' ? 'bg-[#FFB800] text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
+            >
+              <Settings size={14} />
+              Настройки
+            </button>
+          </div>
           
           <div className="flex items-center gap-4">
             <button 
@@ -358,7 +433,9 @@ export default function AdminPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-10">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
+        {adminTab === 'projects' ? (
+          <>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
           <div>
             <h1 className="text-3xl font-bold mb-1">Проекты</h1>
             <p className="text-white/40">Управление вашим портфолио</p>
@@ -652,6 +729,121 @@ export default function AdminPage() {
                 </div>
               ))
             )}
+          </>
+        ) : (
+          <div className="max-w-4xl">
+            <div className="mb-10">
+              <h1 className="text-3xl font-bold mb-1">Настройки сайта</h1>
+              <p className="text-white/40">Управление контактами и общей информацией</p>
+            </div>
+
+            <div className="bg-[#141414] border border-white/10 rounded-3xl p-8 shadow-2xl">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <Settings className="text-[#FFB800]" />
+                  Общие контакты
+                </h2>
+                <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
+                  {(['uk', 'ru', 'en'] as const).map(l => (
+                    <button
+                      key={l}
+                      onClick={() => setActiveLang(l)}
+                      className={`px-4 py-2 rounded-lg text-xs font-bold uppercase transition-all ${activeLang === l ? 'bg-[#FFB800] text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
+                    >
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <form onSubmit={handleSettingsSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-white/60 flex items-center gap-2">
+                      <Mail size={14} className="text-[#FFB800]" /> Email
+                    </label>
+                    <input
+                      type="email"
+                      value={settings.email}
+                      onChange={e => setSettings({...settings, email: e.target.value})}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
+                      placeholder="daria.koval@creator.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-white/60 flex items-center gap-2">
+                      <Phone size={14} className="text-[#FFB800]" /> Телефон
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.phone}
+                      onChange={e => setSettings({...settings, phone: e.target.value})}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
+                      placeholder="+38 (000) 000-00-00"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-white/60 flex items-center gap-2">
+                    <MapPin size={14} className="text-[#FFB800]" /> Локация ({activeLang.toUpperCase()})
+                  </label>
+                  <input
+                    type="text"
+                    value={settings[`location_${activeLang}` as keyof SiteSettings] as string}
+                    onChange={e => setSettings({...settings, [`location_${activeLang}`]: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
+                    placeholder="Київ, Україна"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/5">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-white/60 flex items-center gap-2">
+                      <Instagram size={14} className="text-[#FFB800]" /> Instagram URL
+                    </label>
+                    <input
+                      type="url"
+                      value={settings.instagram_url}
+                      onChange={e => setSettings({...settings, instagram_url: e.target.value})}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
+                      placeholder="https://instagram.com/daria_creator"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-white/60 flex items-center gap-2">
+                      <Send size={14} className="text-[#FFB800]" /> Telegram Username
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20">@</span>
+                      <input
+                        type="text"
+                        value={settings.telegram_user}
+                        onChange={e => setSettings({...settings, telegram_user: e.target.value})}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-8 pr-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
+                        placeholder="daria_creative"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="flex items-center gap-2 text-red-400 text-sm bg-red-400/10 p-4 rounded-xl border border-red-400/20">
+                    <AlertCircle size={18} />
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={uploading}
+                  className="w-full bg-white text-black font-black py-5 rounded-2xl hover:bg-[#FFB800] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                >
+                  {uploading ? <Loader2 className="animate-spin" /> : <Check size={24} />}
+                  {uploading ? 'СОХРАНЕНИЕ...' : 'СОХРАНИТЬ НАСТРОЙКИ'}
+                </button>
+              </form>
+            </div>
           </div>
         )}
       </main>

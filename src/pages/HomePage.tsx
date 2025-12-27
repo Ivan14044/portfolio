@@ -24,7 +24,7 @@ import { Link } from 'react-router-dom';
 import ContactForm from '../components/ContactForm';
 import CaseStudyCard from '../components/CaseStudyCard';
 import { supabase } from '../utils/supabase';
-import type { DatabaseProject } from '../utils/supabase';
+import type { DatabaseProject, SiteSettings } from '../utils/supabase';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -62,6 +62,15 @@ export default function HomePage() {
   // Состояние для динамических проектов из Supabase
   const [dbProjects, setDbProjects] = useState<DatabaseProject[]>([]);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
+  
+  // Состояние для настроек сайта
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
+
+  const getLocalizedField = (uk: any, ru: any, en: any, fallback?: any) => {
+    if (language === 'uk') return uk || ru || en || fallback || '';
+    if (language === 'ru') return ru || uk || en || fallback || '';
+    return en || ru || uk || fallback || '';
+  };
 
   // Загрузка проектов из Supabase
   useEffect(() => {
@@ -81,16 +90,26 @@ export default function HomePage() {
       }
     }
     fetchProjects();
+
+    async function fetchSettings() {
+      try {
+        const { data, error } = await supabase
+          .from('site_settings')
+          .select('*')
+          .single();
+        
+        if (!error && data) {
+          setSettings(data);
+        }
+      } catch (err) {
+        console.error('⚠️ Ошибка при загрузке настроек:', err);
+      }
+    }
+    fetchSettings();
   }, []); 
 
   // Оптимизированный расчет проектов
   const displayProjects = useMemo(() => {
-    const getLocalizedField = (uk: any, ru: any, en: any, fallback?: any) => {
-      if (language === 'uk') return uk || ru || en || fallback || '';
-      if (language === 'ru') return ru || uk || en || fallback || '';
-      return en || ru || uk || fallback || '';
-    };
-
     return (dbProjects || []).map(p => ({
       id: p.id,
       title: getLocalizedField(p.title_uk, p.title_ru, p.title_en, p.title),
@@ -331,12 +350,23 @@ export default function HomePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-24 max-w-4xl">
               <div className="space-y-6">
-                <ContactItem icon={Mail} text={portfolioData.email} />
-                <ContactItem icon={Instagram} text={portfolioData.linkedin} />
+                <ContactItem icon={Mail} text={settings?.email || portfolioData.email} />
+                <ContactItem 
+                  icon={Instagram} 
+                  text={settings?.instagram_url?.replace('https://', '') || portfolioData.linkedin} 
+                  link={settings?.instagram_url}
+                />
               </div>
               <div className="space-y-6">
-                <ContactItem icon={Send} text="@daria_creative" />
-                <ContactItem icon={MapPin} text={portfolioData.location} />
+                <ContactItem 
+                  icon={Send} 
+                  text={settings?.telegram_user ? `@${settings.telegram_user}` : "@daria_creative"} 
+                  link={settings?.telegram_user ? `https://t.me/${settings.telegram_user}` : undefined}
+                />
+                <ContactItem 
+                  icon={MapPin} 
+                  text={settings ? getLocalizedField(settings.location_uk, settings.location_ru, settings.location_en) : portfolioData.location} 
+                />
               </div>
             </div>
           </motion.div>
@@ -537,30 +567,42 @@ export default function HomePage() {
           </motion.h2>
           
           <div className="flex flex-wrap gap-8 mb-32">
-            {portfolioData.socials.map((social, si) => (
+            {settings?.instagram_url && <SocialLink name="Instagram" url={settings.instagram_url} />}
+            {settings?.telegram_user && <SocialLink name="Telegram" url={`https://t.me/${settings.telegram_user}`} />}
+            {!settings && portfolioData.socials.map((social, si) => (
               <SocialLink key={si} name={social.name} url={social.url} />
             ))}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 mb-24 md:mb-48">
-            <div className="group cursor-pointer">
+            <a 
+              href={`mailto:${settings?.email || portfolioData.email}`}
+              className="group cursor-pointer block"
+            >
               <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.4em] mb-3 md:mb-4 block">{t.contact.emailMe}</span>
               <div className="flex items-center gap-4 md:gap-6">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-2xl md:rounded-3xl bg-white/5 flex items-center justify-center group-hover:bg-[#FFB800] group-hover:text-black transition-all duration-500">
                   <Mail className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
                 </div>
-                <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black group-hover:text-[#FFB800] transition-colors break-all">{portfolioData.email}</span>
+                <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black group-hover:text-[#FFB800] transition-colors break-all">{settings?.email || portfolioData.email}</span>
               </div>
-            </div>
-            <div className="group cursor-pointer">
+            </a>
+            <a 
+              href={settings?.telegram_user ? `https://t.me/${settings.telegram_user}` : "https://t.me/daria_creative"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group cursor-pointer block"
+            >
               <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.4em] mb-3 md:mb-4 block">{t.contact.telegramMe}</span>
               <div className="flex items-center gap-4 md:gap-6">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-2xl md:rounded-3xl bg-white/5 flex items-center justify-center group-hover:bg-[#FFB800] group-hover:text-black transition-all duration-500">
                   <Send className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
                 </div>
-                <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black group-hover:text-[#FFB800] transition-colors break-all">@daria_creative</span>
+                <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black group-hover:text-[#FFB800] transition-colors break-all">
+                  {settings?.telegram_user ? `@${settings.telegram_user}` : "@daria_creative"}
+                </span>
               </div>
-            </div>
+            </a>
           </div>
         </section>
 
@@ -704,8 +746,8 @@ function NavItemWithTooltip({
   );
 }
 
-function ContactItem({ icon: Icon, text }: { icon: any, text: string }) {
-  return (
+function ContactItem({ icon: Icon, text, link }: { icon: any, text: string, link?: string }) {
+  const content = (
     <div className="flex items-center gap-6 group cursor-pointer w-fit">
       <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-[#FFB800] group-hover:text-black transition-all duration-500 group-hover:rotate-12">
         <Icon className="w-5 h-5" />
@@ -713,6 +755,12 @@ function ContactItem({ icon: Icon, text }: { icon: any, text: string }) {
       <span className="text-base sm:text-lg md:text-xl font-bold text-white/50 group-hover:text-white transition-colors tracking-tight break-all">{text}</span>
     </div>
   );
+
+  if (link) {
+    return <a href={link} target="_blank" rel="noopener noreferrer">{content}</a>;
+  }
+
+  return content;
 }
 
 function ToolIcon({ name, logo }: { name: string, logo?: string }) {
