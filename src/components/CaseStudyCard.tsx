@@ -30,6 +30,23 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
   const beforeImg = beforeImage || caseStudy.beforeImage || `/images/image_1.webp`;
   const afterImg = afterImage || caseStudy.afterImage || `/images/image_2.webp`;
 
+  useEffect(() => {
+    if (isDragging) {
+      // Блокируем прокрутку страницы, когда пользователь тянет слайдер
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none'; // Запрещаем стандартные жесты браузера
+    } else {
+      // Возвращаем как было
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    };
+  }, [isDragging]);
+
   // Обработка позиции слайдера (оптимизированная версия)
   const updatePosition = (clientX: number, skipAnimation = false) => {
     if (!containerRef.current) return;
