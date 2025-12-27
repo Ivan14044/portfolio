@@ -112,38 +112,36 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    let ticking = false;
-
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const sections = ['home', 'summary', 'experience', 'portfolio', 'skills', 'contact', 'links'];
-          const scrollPosition = window.scrollY + window.innerHeight / 3;
-
-          for (const section of sections) {
-            const element = document.getElementById(section);
-            if (element) {
-              const { offsetTop, offsetHeight } = element;
-              if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
-                const newSection = section;
-                if (newSection !== activeSection) {
-                  setActiveSection(newSection);
-                  setActiveImage(sectionImages[newSection]);
-                  setBlurLevel(sectionBlurMap[newSection]);
-                }
-              }
-            }
-          }
-          ticking = false;
-        });
-        ticking = true;
-      }
+    const sections = ['home', 'summary', 'experience', 'portfolio', 'skills', 'contact', 'links'];
+    
+    const observerOptions = {
+      root: null,
+      rootMargin: '-20% 0px -20% 0px', // Срабатывает, когда секция в центре экрана
+      threshold: 0
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [activeSection, sectionImages, sectionBlurMap]);
+    const observerCallback = (entries: IntersectionObserverEntry[]) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const sectionId = entry.target.id;
+          if (sectionId !== activeSection) {
+            setActiveSection(sectionId);
+            setActiveImage(sectionImages[sectionId]);
+            setBlurLevel(sectionBlurMap[sectionId]);
+          }
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+    sections.forEach(id => {
+      const element = document.getElementById(id);
+      if (element) observer.observe(element);
+    });
+
+    return () => observer.disconnect();
+  }, [sectionImages, sectionBlurMap]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -174,23 +172,30 @@ export default function HomePage() {
     <div className="relative min-h-screen bg-[#080808] text-white selection:bg-[#FFB800]/40 font-sans overflow-x-hidden">
       
       {/* Background Effects */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-[15%] right-[-5%] w-[1000px] h-[1000px] bg-[#FFB800]/5 rounded-full blur-[180px]" />
-        <div className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-orange-900/5 rounded-full blur-[150px]" />
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div 
+          className="absolute top-[15%] right-[-5%] w-[1000px] h-[1000px] bg-[#FFB800]/5 rounded-full blur-[120px] will-change-transform" 
+          style={{ transform: 'translateZ(0)' }} 
+        />
+        <div 
+          className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-orange-900/5 rounded-full blur-[100px] will-change-transform" 
+          style={{ transform: 'translateZ(0)' }} 
+        />
         
         {/* Hero Portrait Image with Dynamic Blur - Desktop */}
         <div className="hidden md:block absolute right-0 bottom-0 top-0 w-1/2 overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeImage}
-              initial={{ opacity: 0, filter: 'blur(20px)' }}
+              initial={{ opacity: 0 }}
               animate={{ 
-                opacity: 1, 
-                filter: `blur(${blurLevel}px)` 
+                opacity: 1,
+                filter: blurLevel > 0 ? `blur(${blurLevel}px)` : 'none'
               }}
-              exit={{ opacity: 0, filter: 'blur(20px)' }}
-              transition={{ duration: 1.2, ease: "easeInOut" }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8, ease: "circOut" }}
               className="absolute inset-0 will-change-[filter,opacity]"
+              style={{ transform: 'translateZ(0)' }}
             >
               <picture>
                 <source srcSet={`/images/${activeImage}.webp`} type="image/webp" />
@@ -199,6 +204,7 @@ export default function HomePage() {
                   alt="Portrait" 
                   className="w-full h-full object-cover object-right-center"
                   loading="eager"
+                  decoding="sync"
                   draggable={false}
                 />
               </picture>
