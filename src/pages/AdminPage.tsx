@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
 import type { DatabaseProject, SiteSettings } from '../utils/supabase';
+import { optimizeImage } from '../utils/imageOptimizer';
 import { LogOut, Plus, Trash2, Image as ImageIcon, Check, AlertCircle, Loader2, ArrowLeft, Languages, Pencil, Database, Settings, Mail, MapPin, Instagram, Send, Phone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { portfolioData } from '../data';
@@ -219,16 +220,19 @@ export default function AdminPage() {
       let afterUrl = afterPreview;
 
       if (beforeFile) {
-        beforeUrl = await handleUpload(beforeFile, 'before');
+        const optimizedBefore = await optimizeImage(beforeFile);
+        beforeUrl = await handleUpload(optimizedBefore, 'before');
       }
       if (afterFile) {
-        afterUrl = await handleUpload(afterFile, 'after');
+        const optimizedAfter = await optimizeImage(afterFile);
+        afterUrl = await handleUpload(optimizedAfter, 'after');
       }
 
       // Загрузка дополнительных фото
       const uploadedAdditionalUrls = [];
       for (const file of additionalFiles) {
-        const url = await handleUpload(file, 'extra');
+        const optimizedExtra = await optimizeImage(file);
+        const url = await handleUpload(optimizedExtra, 'extra');
         uploadedAdditionalUrls.push(url);
       }
 
