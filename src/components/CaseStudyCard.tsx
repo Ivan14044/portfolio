@@ -169,6 +169,8 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
               className="absolute inset-0 w-full h-full object-cover"
               loading="lazy"
               decoding="async"
+              width="800"
+              height="1000"
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-black" />
@@ -191,6 +193,8 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
               className="absolute inset-0 w-full h-full object-cover"
               loading="lazy"
               decoding="async"
+              width="800"
+              height="1000"
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-orange-900/20 to-black" />

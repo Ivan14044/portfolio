@@ -58,14 +58,24 @@ export default function HomePage() {
         <meta name="twitter:description" content={seoDescription} />
       </Helmet>
       
+      <style>{`
+        section {
+          content-visibility: auto;
+          contain-intrinsic-size: 1px 500px;
+        }
+        #home {
+          content-visibility: visible;
+        }
+      `}</style>
+      
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <div 
-          className="absolute top-[15%] right-[-5%] w-[1000px] h-[1000px] bg-[#FFB800]/5 rounded-full blur-[120px] will-change-transform" 
+          className="absolute top-[15%] right-[-5%] w-[600px] md:w-[1000px] h-[600px] md:h-[1000px] bg-[#FFB800]/5 rounded-full blur-[80px] md:blur-[120px] will-change-transform" 
           style={{ transform: 'translateZ(0)' }} 
         />
         <div 
-          className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-orange-900/5 rounded-full blur-[100px] will-change-transform" 
+          className="absolute bottom-[-10%] left-[-5%] w-[400px] md:w-[600px] h-[400px] md:h-[600px] bg-orange-900/5 rounded-full blur-[60px] md:blur-[100px] will-change-transform" 
           style={{ transform: 'translateZ(0)' }} 
         />
         
