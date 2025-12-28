@@ -169,8 +169,6 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
               className="absolute inset-0 w-full h-full object-cover"
               loading="lazy"
               decoding="async"
-              width="800"
-              height="1000"
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-black" />
@@ -193,8 +191,6 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
               className="absolute inset-0 w-full h-full object-cover"
               loading="lazy"
               decoding="async"
-              width="800"
-              height="1000"
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-orange-900/20 to-black" />
@@ -212,6 +208,12 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
             onMouseDown={handleMouseDown}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
+            role="slider"
+            aria-label="Слайдер сравнения До и После"
+            aria-valuenow={sliderPosition}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            tabIndex={0}
           >
             <div className="flex items-center gap-1">
               <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -246,6 +248,7 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
             to={`/project/${caseStudy.id}`}
             className="absolute bottom-6 right-6 z-30 w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group/btn hover:bg-[#FFB800] transition-all duration-300 pointer-events-auto shadow-2xl"
             onClick={(e) => e.stopPropagation()}
+            aria-label={`Смотреть детали кейса: ${caseStudy.title}`}
             title="Смотреть детали кейса"
           >
             <Maximize2 className="w-5 h-5 text-white group-hover/btn:text-black transition-colors" />

@@ -58,24 +58,14 @@ export default function HomePage() {
         <meta name="twitter:description" content={seoDescription} />
       </Helmet>
       
-      <style>{`
-        section {
-          content-visibility: auto;
-          contain-intrinsic-size: 1px 500px;
-        }
-        #home {
-          content-visibility: visible;
-        }
-      `}</style>
-      
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <div 
-          className="absolute top-[15%] right-[-5%] w-[600px] md:w-[1000px] h-[600px] md:h-[1000px] bg-[#FFB800]/5 rounded-full blur-[80px] md:blur-[120px] will-change-transform" 
+          className="absolute top-[15%] right-[-5%] w-[1000px] h-[1000px] bg-[#FFB800]/5 rounded-full blur-[120px] will-change-transform" 
           style={{ transform: 'translateZ(0)' }} 
         />
         <div 
-          className="absolute bottom-[-10%] left-[-5%] w-[400px] md:w-[600px] h-[400px] md:h-[600px] bg-orange-900/5 rounded-full blur-[60px] md:blur-[100px] will-change-transform" 
+          className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-orange-900/5 rounded-full blur-[100px] will-change-transform" 
           style={{ transform: 'translateZ(0)' }} 
         />
         
@@ -130,6 +120,8 @@ export default function HomePage() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               onClick={() => setIsLanguageMenuOpen(!isLanguageMenuOpen)}
+              aria-label="Сменить язык"
+              aria-expanded={isLanguageMenuOpen}
               className="flex items-center gap-2 bg-white/10 backdrop-blur-2xl border border-white/20 px-4 py-2 rounded-full transition-all duration-300 hover:bg-white/15"
               style={{
                 background: 'rgba(255, 255, 255, 0.08)',
@@ -225,14 +217,14 @@ export default function HomePage() {
             transition={{ duration: 0.8 }}
             className="relative z-10"
           >
-            <h2 className="text-[#FFB800] font-black tracking-[0.3em] sm:tracking-[0.4em] mb-6 md:mb-8 text-xs sm:text-sm md:text-base uppercase">
-              {t.title}
-            </h2>
-            
             <h1 className="text-5xl sm:text-7xl md:text-9xl lg:text-[12rem] xl:text-[14rem] font-black mb-12 md:mb-20 tracking-tighter leading-[0.8] uppercase flex flex-col">
               <span className="block">{t.name.split(' ')[0]}</span>
               <span className="block text-white/95">{t.name.split(' ').slice(1).join(' ')}</span>
             </h1>
+
+            <p className="text-[#FFB800] font-black tracking-[0.3em] sm:tracking-[0.4em] mb-6 md:mb-8 text-xs sm:text-sm md:text-base uppercase">
+              {t.title}
+            </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-24 max-w-4xl">
               <div className="space-y-6">
@@ -357,10 +349,10 @@ export default function HomePage() {
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: di * 0.05 }}
-                      className="flex items-start gap-3 md:gap-4 text-white/40 text-sm sm:text-base md:text-lg leading-snug group"
+                      className="flex items-start gap-3 md:gap-4 text-white/60 text-sm sm:text-base md:text-lg leading-snug group"
                     >
                       <span className="text-[#FFB800] font-black mt-[-2px] group-hover:scale-125 transition-transform">—</span>
-                      <span className="group-hover:text-white/60 transition-colors">{detail}</span>
+                      <span className="group-hover:text-white/90 transition-colors">{detail}</span>
                     </motion.div>
                   ))}
                 </div>
@@ -385,7 +377,7 @@ export default function HomePage() {
               {t.skills.slice(0, Math.ceil(t.skills.length / 2)).map((skill, si) => (
                 <div key={si} className="flex items-center gap-4 group cursor-default">
                   <div className="w-2 h-2 bg-[#FFB800] rounded-full" />
-                  <span className="text-lg sm:text-xl md:text-2xl font-bold text-white group-hover:text-[#FFB800] transition-colors duration-300">{skill}</span>
+                  <span className="text-lg sm:text-xl md:text-2xl font-bold text-white/90 group-hover:text-[#FFB800] transition-colors duration-300">{skill}</span>
                 </div>
               ))}
             </div>
@@ -393,7 +385,7 @@ export default function HomePage() {
               {t.skills.slice(Math.ceil(t.skills.length / 2)).map((skill, si) => (
                 <div key={si} className="flex items-center gap-4 group cursor-default">
                   <div className="w-2 h-2 bg-[#FFB800] rounded-full" />
-                  <span className="text-lg sm:text-xl md:text-2xl font-bold text-white group-hover:text-[#FFB800] transition-colors duration-300">{skill}</span>
+                  <span className="text-lg sm:text-xl md:text-2xl font-bold text-white/90 group-hover:text-[#FFB800] transition-colors duration-300">{skill}</span>
                 </div>
               ))}
             </div>
@@ -492,15 +484,15 @@ export default function HomePage() {
           </div>
         </section>
 
-        <footer className="border-t border-white/5 pt-20 pb-12 flex flex-col md:flex-row justify-between items-center gap-12 text-white/20 text-sm">
+        <footer className="border-t border-white/5 pt-20 pb-12 flex flex-col md:flex-row justify-between items-center gap-12 text-white/40 text-sm">
             <div className="space-y-2 text-center md:text-left">
               <p className="font-black uppercase tracking-widest">{t.footer.copyright}</p>
-              <p className="text-white/40 font-bold">{t.footer.by}</p>
+              <p className="text-white/60 font-bold">{t.footer.by}</p>
             </div>
             <div className="flex gap-16">
-              <Link to="/privacy" className="hover:text-white transition-colors">{t.footer.privacy}</Link>
-              <Link to="/terms" className="hover:text-white transition-colors">{t.footer.terms}</Link>
-              <Link to="/cookies" className="hover:text-white transition-colors">{t.footer.cookies}</Link>
+              <Link to="/privacy" className="hover:text-[#FFB800] transition-colors">{t.footer.privacy}</Link>
+              <Link to="/terms" className="hover:text-[#FFB800] transition-colors">{t.footer.terms}</Link>
+              <Link to="/cookies" className="hover:text-[#FFB800] transition-colors">{t.footer.cookies}</Link>
             </div>
           </footer>
 
@@ -579,6 +571,7 @@ function NavItemWithTooltip({
         href={`#${item.id}`}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
+        aria-label={item.label}
         className={cn(
           "px-3 md:px-4 lg:px-5 py-2 md:py-2.5 rounded-full flex items-center gap-0 md:gap-2 lg:gap-2.5 transition-all duration-300 relative group",
           isActive 
@@ -638,12 +631,12 @@ function ContactItem({ icon: Icon, text, link }: { icon: any, text: string, link
       <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-[#FFB800] group-hover:text-black transition-all duration-500 group-hover:rotate-12">
         <Icon className="w-5 h-5" />
       </div>
-      <span className="text-base sm:text-lg md:text-xl font-bold text-white/50 group-hover:text-white transition-colors tracking-tight break-all">{text}</span>
+      <span className="text-base sm:text-lg md:text-xl font-bold text-white/70 group-hover:text-white transition-colors tracking-tight break-all">{text}</span>
     </div>
   );
 
   if (link) {
-    return <a href={link} target="_blank" rel="noopener noreferrer">{content}</a>;
+    return <a href={link} target="_blank" rel="noopener noreferrer" aria-label={`Связаться через ${text}`}>{content}</a>;
   }
 
   return content;
@@ -670,6 +663,7 @@ function ToolIcon({ name, logo }: { name: string, logo?: string }) {
               setImageError(true);
             }}
             loading="lazy"
+            decoding="async"
           />
         ) : (
           <div className="text-3xl font-black text-white/10 group-hover:text-[#FFB800] transition-all duration-300">
@@ -691,6 +685,7 @@ function SocialLink({ name, url }: { name: string, url: string }) {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
+      aria-label={`Перейти в ${name}`}
       whileHover={{ y: -8, scale: 1.1, rotate: 5 }}
       whileTap={{ scale: 0.9 }}
       className="w-20 h-20 bg-[#111] rounded-3xl flex items-center justify-center border border-white/5 hover:border-[#FFB800]/60 hover:bg-[#FFB800] hover:text-black transition-all duration-500 group shadow-2xl"

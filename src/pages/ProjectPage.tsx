@@ -93,10 +93,10 @@ export default function ProjectPage() {
         <meta name="twitter:image" content={project.after_image} />
       </Helmet>
 
-      {/* Header / Nav */}
       <header className="fixed top-0 left-0 right-0 z-50 px-4 md:px-12 py-6 flex items-center justify-between pointer-events-none">
         <Link 
           to="/" 
+          aria-label="Вернуться на главную"
           className="bg-black/20 backdrop-blur-md px-6 py-3 rounded-full border border-white/5 pointer-events-auto flex items-center gap-2 hover:bg-[#FFB800] hover:text-black transition-all group shadow-xl"
         >
           <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
@@ -123,7 +123,7 @@ export default function ProjectPage() {
                 {title}
               </h1>
 
-              <div className="space-y-6 text-lg text-white/60 leading-relaxed font-medium">
+              <div className="space-y-6 text-lg text-white/80 leading-relaxed font-medium">
                 <p>{description}</p>
               </div>
             </motion.div>
@@ -162,7 +162,7 @@ export default function ProjectPage() {
               </div>
               <div className="flex flex-wrap gap-2">
                 {services.map((service: string, i: number) => (
-                  <span key={i} className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm font-bold">
+                  <span key={i} className="px-4 py-2 rounded-xl bg-white/10 border border-white/10 text-sm font-bold text-white/90">
                     {service}
                   </span>
                 ))}
@@ -177,7 +177,7 @@ export default function ProjectPage() {
                 className="prose prose-invert max-w-none pt-12 border-t border-white/5"
               >
                 <h3 className="text-xl font-bold text-white mb-6 uppercase tracking-widest">История проекта</h3>
-                <div className="text-white/70 text-lg leading-relaxed whitespace-pre-line">
+                <div className="text-white/90 text-lg leading-relaxed whitespace-pre-line">
                   {content}
                 </div>
               </motion.div>
@@ -227,6 +227,7 @@ export default function ProjectPage() {
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                         alt={`Detail ${idx + 1}`}
                         loading="lazy"
+                        decoding="async"
                       />
                       <div className="absolute inset-0 bg-[#FFB800]/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <Maximize2 size={32} className="text-white drop-shadow-lg" />
@@ -271,7 +272,8 @@ export default function ProjectPage() {
       <footer className="max-w-7xl mx-auto px-4 py-20 border-t border-white/5 text-center">
         <Link 
           to="/" 
-          className="inline-flex items-center gap-4 text-white/40 hover:text-[#FFB800] transition-all group"
+          aria-label="Вернуться к портфолио"
+          className="inline-flex items-center gap-4 text-white/60 hover:text-[#FFB800] transition-all group"
         >
           <ArrowLeft className="group-hover:-translate-x-2 transition-transform" />
           <span className="text-xl font-black uppercase tracking-widest">Вернуться к портфолио</span>
