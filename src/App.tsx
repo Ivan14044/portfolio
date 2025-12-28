@@ -9,6 +9,7 @@ import CookiePolicy from './pages/CookiePolicy';
 import ScrollToTop from './components/ScrollToTop';
 import CookieConsent from './components/CookieConsent';
 
+// Trigger build
 export default function App() {
   return (
     <HelmetProvider>
