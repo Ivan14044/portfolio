@@ -331,10 +331,10 @@ export default function HomePage() {
                       <span className="text-xl font-mono text-[#FFB800]">{exp.period}</span>
                     </div>
                     <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black uppercase mb-4 leading-none">{exp.role}</h3>
-                    <h4 className="text-lg sm:text-xl md:text-2xl font-bold text-white/40">{exp.company}</h4>
+                    <h4 className="text-lg sm:text-xl md:text-2xl font-bold text-white/60">{exp.company}</h4>
                   </div>
                   <div className="lg:w-2/3">
-                    <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/70 leading-relaxed mb-8 md:mb-12">
+                    <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 leading-relaxed mb-8 md:mb-12">
                       {exp.description}
                     </p>
                   </div>
@@ -455,28 +455,30 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 mb-24 md:mb-48">
             <a 
               href={`mailto:${settings?.email || portfolioData.email}`}
+              aria-label={`Отправить email на ${settings?.email || portfolioData.email}`}
               className="group cursor-pointer block"
             >
-              <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.4em] mb-3 md:mb-4 block">{t.contact.emailMe}</span>
+              <span className="text-[10px] font-black text-white/50 uppercase tracking-[0.4em] mb-3 md:mb-4 block">{t.contact.emailMe}</span>
               <div className="flex items-center gap-4 md:gap-6">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-2xl md:rounded-3xl bg-white/5 flex items-center justify-center group-hover:bg-[#FFB800] group-hover:text-black transition-all duration-500">
                   <Mail className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
                 </div>
-                <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black group-hover:text-[#FFB800] transition-colors break-all">{settings?.email || portfolioData.email}</span>
+                <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black group-hover:text-[#FFB800] transition-colors break-all text-white">{settings?.email || portfolioData.email}</span>
               </div>
             </a>
             <a 
               href={settings?.telegram_user ? `https://t.me/${settings.telegram_user}` : "https://t.me/daria_creative"}
               target="_blank"
               rel="noopener noreferrer"
+              aria-label={`Связаться в Telegram: @${settings?.telegram_user || 'daria_creative'}`}
               className="group cursor-pointer block"
             >
-              <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.4em] mb-3 md:mb-4 block">{t.contact.telegramMe}</span>
+              <span className="text-[10px] font-black text-white/50 uppercase tracking-[0.4em] mb-3 md:mb-4 block">{t.contact.telegramMe}</span>
               <div className="flex items-center gap-4 md:gap-6">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-2xl md:rounded-3xl bg-white/5 flex items-center justify-center group-hover:bg-[#FFB800] group-hover:text-black transition-all duration-500">
                   <Send className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
                 </div>
-                <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black group-hover:text-[#FFB800] transition-colors break-all">
+                <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black group-hover:text-[#FFB800] transition-colors break-all text-white">
                   {settings?.telegram_user ? `@${settings.telegram_user}` : "@daria_creative"}
                 </span>
               </div>
@@ -484,10 +486,10 @@ export default function HomePage() {
           </div>
         </section>
 
-        <footer className="border-t border-white/5 pt-20 pb-12 flex flex-col md:flex-row justify-between items-center gap-12 text-white/40 text-sm">
+        <footer className="border-t border-white/5 pt-20 pb-12 flex flex-col md:flex-row justify-between items-center gap-12 text-white/60 text-sm">
             <div className="space-y-2 text-center md:text-left">
               <p className="font-black uppercase tracking-widest">{t.footer.copyright}</p>
-              <p className="text-white/60 font-bold">{t.footer.by}</p>
+              <p className="text-white/70 font-bold">{t.footer.by}</p>
             </div>
             <div className="flex gap-16">
               <Link to="/privacy" className="hover:text-[#FFB800] transition-colors">{t.footer.privacy}</Link>
@@ -636,7 +638,13 @@ function ContactItem({ icon: Icon, text, link }: { icon: any, text: string, link
   );
 
   if (link) {
-    return <a href={link} target="_blank" rel="noopener noreferrer" aria-label={`Связаться через ${text}`}>{content}</a>;
+    const isInstagram = link.includes('instagram.com');
+    const isTelegram = link.includes('t.me');
+    let label = `Связаться через ${text}`;
+    if (isInstagram) label = `Открыть Instagram: ${text}`;
+    if (isTelegram) label = `Связаться в Telegram: ${text}`;
+
+    return <a href={link} target="_blank" rel="noopener noreferrer" aria-label={label}>{content}</a>;
   }
 
   return content;
@@ -680,12 +688,22 @@ function SocialLink({ name, url }: { name: string, url: string }) {
   const icons: any = { LinkedIn: Linkedin, Instagram, X: Instagram, Behance: Instagram, Telegram: Send, Pinterest: Instagram };
   const Icon = icons[name] || Instagram;
   
+  let label = `Перейти в ${name}`;
+  if (name === 'Instagram') {
+    const username = url.split('/').pop()?.replace('@', '');
+    label = `Открыть Instagram: @${username}`;
+  }
+  if (name === 'Telegram') {
+    const username = url.split('/').pop()?.replace('@', '');
+    label = `Связаться в Telegram: @${username}`;
+  }
+
   return (
     <motion.a 
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={`Перейти в ${name}`}
+      aria-label={label}
       whileHover={{ y: -8, scale: 1.1, rotate: 5 }}
       whileTap={{ scale: 0.9 }}
       className="w-20 h-20 bg-[#111] rounded-3xl flex items-center justify-center border border-white/5 hover:border-[#FFB800]/60 hover:bg-[#FFB800] hover:text-black transition-all duration-500 group shadow-2xl"

@@ -9,7 +9,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "optimize-images": "node scripts/convert-images.js"
+    "optimize-images": "node scripts/convert-images.js",
+    "optimize-supabase": "node scripts/optimize-supabase-images.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.89.0",

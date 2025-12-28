@@ -139,6 +139,7 @@ export default function CookieConsent() {
                   </div>
                   <button
                     onClick={() => setShowBanner(false)}
+                    aria-label="Закрыть уведомление о куки"
                     className="flex-shrink-0 w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 active:bg-white/15 flex items-center justify-center transition-all duration-200"
                   >
                     <X className="w-4 h-4 text-white/50" />
@@ -160,6 +161,7 @@ export default function CookieConsent() {
                   </button>
                   <button
                     onClick={() => setShowSettings(true)}
+                    aria-label="Настроить куки"
                     className="px-6 py-2.5 rounded-full bg-transparent text-white font-medium hover:bg-white/5 active:scale-[0.98] transition-all duration-200 border border-white/10 text-sm md:text-base flex items-center justify-center gap-2"
                   >
                     <Settings className="w-4 h-4" />
@@ -167,6 +169,7 @@ export default function CookieConsent() {
                   </button>
                   <Link
                     to="/cookies"
+                    aria-label="Узнать больше о файлах куки"
                     className="px-6 py-2.5 rounded-full text-white/50 hover:text-white/70 font-medium transition-colors text-sm md:text-base text-center"
                   >
                     {t.cookieConsent.learnMore}
@@ -186,6 +189,7 @@ export default function CookieConsent() {
                   </h3>
                   <button
                     onClick={() => setShowSettings(false)}
+                    aria-label="Вернуться к основному окну"
                     className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 active:bg-white/15 flex items-center justify-center transition-all duration-200"
                   >
                     <X className="w-4 h-4 text-white/50" />
