@@ -227,16 +227,16 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
         </div>
 
         {/* Подписи "До" и "После" */}
-        <div className="absolute top-6 left-6 z-20">
-          <div className="px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-xl border border-white/10">
-            <span className="text-xs font-bold text-white uppercase tracking-wider">
+        <div className="absolute top-4 left-4 z-20 opacity-40 group-hover:opacity-100 transition-opacity duration-500">
+          <div className="px-2 py-1 rounded-md bg-black/40 backdrop-blur-md border border-white/5">
+            <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">
               {t.sections.before}
             </span>
           </div>
         </div>
-        <div className="absolute top-6 right-6 z-20">
-          <div className="px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-xl border border-white/10">
-            <span className="text-xs font-bold text-white uppercase tracking-wider">
+        <div className="absolute top-4 right-4 z-20 opacity-40 group-hover:opacity-100 transition-opacity duration-500">
+          <div className="px-2 py-1 rounded-md bg-black/40 backdrop-blur-md border border-white/5">
+            <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">
               {t.sections.after}
             </span>
           </div>
@@ -256,31 +256,33 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
         )}
 
         {/* Overlay gradient для лучшей читаемости текста */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-10 pointer-events-none opacity-40 group-hover:opacity-90 transition-opacity duration-500" />
       </div>
 
       {/* Content (информация о кейсе) */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 md:p-6 z-20 pointer-events-none">
-        <div className="mb-3">
-          <h6 className="text-lg sm:text-xl font-bold mb-1 group-hover:text-[#FFB800] transition-colors tracking-tight">
+      <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 md:p-6 z-20 pointer-events-none flex flex-col justify-end translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+        <div className="mb-2">
+          <h6 className="text-lg sm:text-xl font-bold mb-0.5 group-hover:text-[#FFB800] transition-colors tracking-tight">
             {caseStudy.title}
           </h6>
-          <p className="text-white/60 text-xs sm:text-sm font-medium mb-2">{caseStudy.client}</p>
-          <p className="text-white/40 text-[10px] sm:text-xs uppercase tracking-wider mb-3">{caseStudy.category}</p>
+          <p className="text-white/40 text-[10px] sm:text-xs uppercase tracking-widest font-black">{caseStudy.category}</p>
         </div>
         
-        <p className="text-white/70 text-xs sm:text-sm leading-snug font-medium mb-4">{caseStudy.description}</p>
-        
-        {/* Services tags */}
-        <div className="flex flex-wrap gap-2">
-          {caseStudy.services.map((service, idx) => (
-            <span
-              key={idx}
-              className="px-2.5 py-1 rounded-lg bg-white/5 text-white/60 text-xs font-medium border border-white/10"
-            >
-              {service}
-            </span>
-          ))}
+        <div className="max-h-0 group-hover:max-h-[300px] opacity-0 group-hover:opacity-100 overflow-hidden transition-all duration-500 ease-in-out">
+          <p className="text-white/60 text-xs sm:text-sm font-medium mb-2 mt-2">{caseStudy.client}</p>
+          <p className="text-white/70 text-xs sm:text-sm leading-snug font-medium mb-4">{caseStudy.description}</p>
+          
+          {/* Services tags */}
+          <div className="flex flex-wrap gap-2 pb-2">
+            {caseStudy.services.map((service, idx) => (
+              <span
+                key={idx}
+                className="px-2 py-0.5 rounded bg-white/5 text-white/40 text-[10px] font-black uppercase border border-white/5"
+              >
+                {service}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
     </div>
