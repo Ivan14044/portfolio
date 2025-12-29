@@ -8,7 +8,6 @@ import {
   User, 
   Briefcase, 
   Zap, 
-  Link as LinkIcon,
   Instagram,
   Linkedin,
   Send,
@@ -24,19 +23,112 @@ import { languageNames, LANGUAGES } from '../translations';
 import { Link } from 'react-router-dom';
 import ContactForm from '../components/ContactForm';
 import CaseStudyCard from '../components/CaseStudyCard';
+import type { CaseStudy } from '../components/CaseStudyCard';
 import { supabase } from '../utils/supabase';
 import type { DatabaseProject, SiteSettings } from '../utils/supabase';
 
-// ... (rest of the imports and functions)
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+const navItems = [
+  { id: 'home', label: 'Главная', icon: Home },
+  { id: 'summary', label: 'Обо мне', icon: User },
+  { id: 'portfolio', label: 'Портфолио', icon: Briefcase },
+  { id: 'experience', label: 'Опыт', icon: Zap },
+  { id: 'contact', label: 'Контакты', icon: Mail },
+];
 
 export default function HomePage() {
   const { language, setLanguage, t } = useTranslation();
   const [activeSection, setActiveSection] = useState('home');
-  const [activeImage, setActiveImage] = useState('image_1');
-  const [blurLevel, setBlurLevel] = useState(0);
+  const [activeImage, setActiveImage] = useState('hero-portrait-1');
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
-  
-  // ... (rest of the state and hooks)
+  const [projects, setProjects] = useState<DatabaseProject[]>([]);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(true);
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch projects
+        const { data: projectsData } = await supabase
+          .from('projects')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (projectsData) setProjects(projectsData);
+
+        // Fetch settings
+        const { data: settingsData } = await supabase
+          .from('site_settings')
+          .select('*')
+          .single();
+        
+        if (settingsData) setSettings(settingsData);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setIsLoadingProjects(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const getLocalizedField = (uk: string, ru: string, en: string) => {
+    if (language === 'uk') return uk;
+    if (language === 'ru') return ru;
+    return en;
+  };
+
+  const displayProjects: CaseStudy[] = useMemo(() => {
+    return projects.map(p => ({
+      id: p.id,
+      title: getLocalizedField(p.title_uk, p.title_ru, p.title_en),
+      client: p.client,
+      category: getLocalizedField(p.category_uk, p.category_ru, p.category_en),
+      description: getLocalizedField(p.description_uk, p.description_ru, p.description_en),
+      services: language === 'uk' ? p.services_uk : language === 'ru' ? p.services_ru : p.services_en,
+      beforeImage: p.before_image,
+      afterImage: p.after_image
+    }));
+  }, [projects, language]);
+
+  // Observer for active section
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
+          }
+        });
+      },
+      { threshold: 0.3 }
+    );
+
+    const sections = ['home', 'summary', 'portfolio', 'experience', 'skills', 'contact', 'links'];
+    sections.forEach((id) => {
+      const element = document.getElementById(id);
+      if (element) observer.observe(element);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Image cycle effect
+  useEffect(() => {
+    const images = ['hero-portrait-1', 'hero-portrait-2', 'hero-portrait-3'];
+    let currentIndex = 0;
+    
+    const interval = setInterval(() => {
+      currentIndex = (currentIndex + 1) % images.length;
+      setActiveImage(images[currentIndex]);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const seoTitle = `Дарья Коваль — Photo Retoucher & Content Creator`;
   const seoDescription = `Профессиональная ретушь фотографий, цветокоррекция и создание контента. Портфолио Дарьи Коваль.`;
@@ -76,11 +168,10 @@ export default function HomePage() {
               key={activeImage}
               initial={{ opacity: 0 }}
               animate={{ 
-                opacity: 1,
-                filter: blurLevel > 0 ? `blur(${blurLevel}px)` : 'none'
+                opacity: 1
               }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 1.5, ease: "linear" }} // Сделал переход максимально плавным и линейным
+              transition={{ duration: 1.5, ease: "linear" }}
               className="absolute inset-0 will-change-[filter,opacity]"
               style={{ transform: 'translateZ(0)' }}
             >
@@ -231,7 +322,7 @@ export default function HomePage() {
                 <ContactItem icon={Mail} text={settings?.email || portfolioData.email} />
                 <ContactItem 
                   icon={Instagram} 
-                  text={settings?.instagram_url?.replace('https://', '') || portfolioData.linkedin} 
+                  text={settings?.instagram_url?.replace('https://', '').replace('www.', '') || 'instagram.com/daria_creator'} 
                   link={settings?.instagram_url}
                 />
               </div>
