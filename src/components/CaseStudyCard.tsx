@@ -180,11 +180,11 @@ const CaseStudyCard = React.memo(({ caseStudy, beforeImage, afterImage }: CaseSt
         <div 
           className={cn(
             "absolute inset-0 overflow-hidden z-10",
-            isDragging && "will-change-[clip-path]"
+            isDragging && "will-change-[width]"
           )}
           style={{ 
-            clipPath: `inset(0 ${100 - sliderPosition}% 0 0)`,
-            transition: isDragging ? 'none' : 'clip-path 0.1s ease-out',
+            width: `${sliderPosition}%`,
+            transition: isDragging ? 'none' : 'width 0.1s ease-out',
             transform: 'translateZ(0)'
           }}
         >
