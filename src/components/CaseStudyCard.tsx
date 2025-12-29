@@ -27,8 +27,8 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Используем переданные изображения или из caseStudy, или заглушки
-  const beforeImg = beforeImage || caseStudy.beforeImage || `/images/image_1.webp`;
-  const afterImg = afterImage || caseStudy.afterImage || `/images/image_2.webp`;
+  const beforeImg = beforeImage || caseStudy.beforeImage || `/image/image_1.webp`;
+  const afterImg = afterImage || caseStudy.afterImage || `/image/image_2.webp`;
 
   useEffect(() => {
     if (isDragging) {

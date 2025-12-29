@@ -1,7 +1,7 @@
 {
   "headers": [
     {
-      "source": "/images/(.*)",
+      "source": "/image/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -25,7 +25,7 @@
       "destination": "/api/:path*"
     },
     {
-      "source": "/((?!api/|images/|assets/|favicon.ico|vite.svg|robots.txt|sitemap.xml).*)",
+      "source": "/((?!api/|image/|assets/|favicon.ico|vite.svg|robots.txt|sitemap.xml).*)",
       "destination": "/index.html"
     }
   ]

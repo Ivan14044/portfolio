@@ -18,8 +18,8 @@ export const portfolioData = {
       category: "Instagram магазин",
       description: "Обработка 200+ товарных фото: ретушь, белый фон, цветокоррекция",
       services: ["Ретушь", "Цветокоррекция", "Обтравка фона"],
-      beforeImage: "/images/image_1.webp",
-      afterImage: "/images/image_2.webp"
+      beforeImage: "/image/image_1.webp",
+      afterImage: "/image/image_2.webp"
     },
     { 
       title: "Fashion бренд - Маркетплейс",
@@ -27,8 +27,8 @@ export const portfolioData = {
       category: "Маркетплейс",
       description: "Приведение фото к стандартам маркетплейса, студийная обработка",
       services: ["Студийная обработка", "Цветокоррекция", "Обтравка"],
-      beforeImage: "/images/image_2.webp",
-      afterImage: "/images/image_3.webp"
+      beforeImage: "/image/image_2.webp",
+      afterImage: "/image/image_3.webp"
     },
     { 
       title: "Каталог товаров для дома",
@@ -36,8 +36,8 @@ export const portfolioData = {
       category: "Каталог",
       description: "Обработка фотосессии для каталога: единый стиль, профессиональная ретушь",
       services: ["Ретушь", "Цветокоррекция", "Дизайн каталога"],
-      beforeImage: "/images/image_3.webp",
-      afterImage: "/images/image_1.webp"
+      beforeImage: "/image/image_3.webp",
+      afterImage: "/image/image_1.webp"
     },
     { 
       title: "Библиотека обработанных фото",
@@ -45,8 +45,8 @@ export const portfolioData = {
       category: "Обработка товаров",
       description: "Создание системы быстрой обработки товарных фото для онлайн-магазинов",
       services: ["Ретушь", "Цветокоррекция", "Автоматизация"],
-      beforeImage: "/images/image_1.webp",
-      afterImage: "/images/image_2.webp"
+      beforeImage: "/image/image_1.webp",
+      afterImage: "/image/image_2.webp"
     },
     { 
       title: "Обработка для соцсетей",
@@ -54,8 +54,8 @@ export const portfolioData = {
       category: "Instagram",
       description: "Ретушь и цветокоррекция фотографий для публикаций в Instagram",
       services: ["Ретушь", "Цветокоррекция", "Стилизация"],
-      beforeImage: "/images/image_2.webp",
-      afterImage: "/images/image_3.webp"
+      beforeImage: "/image/image_2.webp",
+      afterImage: "/image/image_3.webp"
     }
   ],
   experience: [

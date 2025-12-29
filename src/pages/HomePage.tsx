@@ -42,7 +42,7 @@ const navItems = [
 export default function HomePage() {
   const { language, setLanguage, t } = useTranslation();
   const [activeSection, setActiveSection] = useState('home');
-  const [activeImage, setActiveImage] = useState('hero-portrait-1');
+  const [activeImage, setActiveImage] = useState('image_1');
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const [projects, setProjects] = useState<DatabaseProject[]>([]);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
@@ -110,11 +110,11 @@ export default function HomePage() {
             
             // Смена фонового изображения в зависимости от секции
             if (sectionId === 'home') {
-              setActiveImage('hero-portrait-1');
+              setActiveImage('image_1');
             } else if (sectionId === 'summary') {
-              setActiveImage('hero-portrait-2');
+              setActiveImage('image_2');
             } else if (['portfolio', 'experience', 'skills', 'contact', 'links'].includes(sectionId)) {
-              setActiveImage('hero-portrait-3');
+              setActiveImage('image_3');
             }
           }
         });
@@ -180,9 +180,9 @@ export default function HomePage() {
               className="absolute inset-0 will-change-[filter,opacity]"
             >
               <picture>
-                <source srcSet={`/images/${activeImage}.webp`} type="image/webp" />
+                <source srcSet={`/image/${activeImage}.webp`} type="image/webp" />
                 <img 
-                  src={`/images/${activeImage}.webp`} 
+                  src={`/image/${activeImage}.webp`} 
                   alt="Portrait" 
                   className="w-full h-full object-cover object-right-center"
                   loading="eager"
@@ -295,9 +295,9 @@ export default function HomePage() {
                 className="absolute inset-0"
               >
                 <picture>
-                  <source srcSet={`/images/${activeImage}.webp`} type="image/webp" />
+                  <source srcSet={`/image/${activeImage}.webp`} type="image/webp" />
                   <img 
-                    src={`/images/${activeImage}.webp`} 
+                    src={`/image/${activeImage}.webp`} 
                     alt="Portrait" 
                     className="w-full h-full object-cover object-center"
                     loading="eager"
