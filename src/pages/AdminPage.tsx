@@ -851,7 +851,7 @@ export default function AdminPage() {
                         <p className="text-white/40 text-[10px] mb-3 uppercase tracking-[0.2em] font-black">{project.category_ru}</p>
                         <p className="text-white/60 text-sm line-clamp-2 mb-4 leading-relaxed font-medium">{project.description_ru}</p>
                         <div className="mt-auto flex flex-wrap gap-2">
-                          {project.services_ru?.slice(0, 3).map((s, i) => (
+                          {project.services_ru?.slice(0, 3).map((s: string, i: number) => (
                             <span key={i} className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[9px] text-white/40 uppercase font-black">
                               {s}
                             </span>

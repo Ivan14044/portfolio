@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, useCallback, memo } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { motion, AnimatePresence, useScroll, type MotionValue } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { 
   Mail, 
@@ -38,7 +38,7 @@ const useThrottledBlur = (scrollYProgress: MotionValue<number>) => {
   
   useEffect(() => {
     let rafId: number;
-    const unsubscribe = scrollYProgress.on('change', (latest) => {
+    const unsubscribe = scrollYProgress.on('change', (latest: number) => {
       cancelAnimationFrame(rafId);
       rafId = requestAnimationFrame(() => {
         // Уменьшаем интенсивность блюра для производительности (макс 6px вместо 8px)

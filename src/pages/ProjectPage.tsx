@@ -212,7 +212,7 @@ export default function ProjectPage() {
               <div className="space-y-8">
                 <h3 className="text-sm font-black text-white/30 uppercase tracking-[0.3em]">Галерея</h3>
                 <div className="grid grid-cols-2 gap-6">
-                  {project.additional_images.map((img, idx) => (
+                  {project.additional_images.map((img: string, idx: number) => (
                     <motion.div
                       key={idx}
                       initial={{ opacity: 0, y: 20 }}
