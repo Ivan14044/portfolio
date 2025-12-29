@@ -272,9 +272,7 @@ export default function HomePage() {
           className="hidden md:block absolute right-0 bottom-0 top-0 w-1/2 overflow-hidden"
           style={{
             transform: 'translateZ(0)',
-            willChange: 'transform, opacity',
-            backfaceVisibility: 'hidden',
-            maxWidth: '50%'
+            backfaceVisibility: 'hidden'
           }}
         >
           <AnimatePresence mode="wait">
@@ -286,11 +284,7 @@ export default function HomePage() {
               }}
               style={{ 
                 transform: 'translateZ(0)',
-                filter: blurStyle,
-                willChange: !isLowPerformance ? 'filter, opacity, transform' : 'transform',
-                backfaceVisibility: 'hidden',
-                width: '100%',
-                height: '100%'
+                filter: blurStyle
               }}
               exit={{ opacity: 0 }}
               transition={{ duration: 1.0, ease: "linear" }}
@@ -307,9 +301,7 @@ export default function HomePage() {
                   draggable={false}
                   style={{ 
                     transform: 'translateZ(0)',
-                    backfaceVisibility: 'hidden',
-                    maxWidth: '100%',
-                    maxHeight: '100%'
+                    backfaceVisibility: 'hidden'
                   }}
                 />
               </picture>
@@ -436,9 +428,7 @@ export default function HomePage() {
                     draggable={false}
                     style={{ 
                       transform: 'translateZ(0)',
-                      backfaceVisibility: 'hidden',
-                      maxWidth: '100%',
-                      maxHeight: '100%'
+                      backfaceVisibility: 'hidden'
                     }}
                   />
                 </picture>
