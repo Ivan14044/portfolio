@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { 
   Mail, 
@@ -48,10 +48,15 @@ export default function HomePage() {
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
 
+  const { scrollYProgress } = useScroll();
+  
+  // Динамический блюр в зависимости от прокрутки
+  const blurValue = useTransform(scrollYProgress, [0, 0.1, 0.2, 0.3], [0, 4, 8, 12]);
+  const blurStyle = useTransform(blurValue, (v) => `blur(${v}px)`);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch projects
         const { data: projectsData } = await supabase
           .from('projects')
           .select('*')
@@ -59,7 +64,6 @@ export default function HomePage() {
         
         if (projectsData) setProjects(projectsData);
 
-        // Fetch settings
         const { data: settingsData } = await supabase
           .from('site_settings')
           .select('*')
@@ -95,17 +99,27 @@ export default function HomePage() {
     }));
   }, [projects, language]);
 
-  // Observer for active section
+  // Observer for active section and background image change
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            setActiveSection(entry.target.id);
+            const sectionId = entry.target.id;
+            setActiveSection(sectionId);
+            
+            // Смена фонового изображения в зависимости от секции
+            if (sectionId === 'home') {
+              setActiveImage('hero-portrait-1');
+            } else if (sectionId === 'summary') {
+              setActiveImage('hero-portrait-2');
+            } else if (['portfolio', 'experience', 'skills', 'contact', 'links'].includes(sectionId)) {
+              setActiveImage('hero-portrait-3');
+            }
           }
         });
       },
-      { threshold: 0.3 }
+      { threshold: 0.2 }
     );
 
     const sections = ['home', 'summary', 'portfolio', 'experience', 'skills', 'contact', 'links'];
@@ -115,19 +129,6 @@ export default function HomePage() {
     });
 
     return () => observer.disconnect();
-  }, []);
-
-  // Image cycle effect
-  useEffect(() => {
-    const images = ['hero-portrait-1', 'hero-portrait-2', 'hero-portrait-3'];
-    let currentIndex = 0;
-    
-    const interval = setInterval(() => {
-      currentIndex = (currentIndex + 1) % images.length;
-      setActiveImage(images[currentIndex]);
-    }, 5000);
-
-    return () => clearInterval(interval);
   }, []);
 
   const seoTitle = `Дарья Коваль — Photo Retoucher & Content Creator`;
@@ -170,10 +171,13 @@ export default function HomePage() {
               animate={{ 
                 opacity: 1
               }}
+              style={{ 
+                transform: 'translateZ(0)',
+                filter: blurStyle
+              }}
               exit={{ opacity: 0 }}
               transition={{ duration: 1.5, ease: "linear" }}
               className="absolute inset-0 will-change-[filter,opacity]"
-              style={{ transform: 'translateZ(0)' }}
             >
               <picture>
                 <source srcSet={`/images/${activeImage}.webp`} type="image/webp" />
@@ -282,6 +286,10 @@ export default function HomePage() {
                 key={activeImage}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
+                style={{ 
+                  transform: 'translateZ(0)',
+                  filter: blurStyle
+                }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 1.2, ease: "easeInOut" }}
                 className="absolute inset-0"
