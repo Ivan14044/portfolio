@@ -215,7 +215,13 @@ export default function HomePage() {
   const seoDescription = `Профессиональная ретушь фотографий, цветокоррекция и создание контента. Портфолио Дарьи Коваль.`;
 
   return (
-    <div className="relative min-h-screen bg-[#080808] text-white selection:bg-[#FFB800]/40 font-sans overflow-x-hidden">
+    <div 
+      className="relative min-h-screen bg-[#080808] text-white selection:bg-[#FFB800]/40 font-sans overflow-x-hidden"
+      style={{ 
+        transform: 'translateZ(0)',
+        willChange: 'scroll-position'
+      }}
+    >
       <Helmet>
         <title>{seoTitle}</title>
         <meta name="description" content={seoDescription} />
@@ -235,19 +241,41 @@ export default function HomePage() {
       </Helmet>
       
       {/* Background Effects - Упрощены для производительности */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+      <div 
+        className="fixed inset-0 pointer-events-none z-0 overflow-hidden"
+        style={{ 
+          transform: 'translateZ(0)',
+          willChange: 'transform',
+          backfaceVisibility: 'hidden'
+        }}
+      >
         {/* Убраны тяжелые blur эффекты для лучшей производительности на слабых ПК */}
         <div 
           className="absolute top-[15%] right-[-5%] w-[1000px] h-[1000px] bg-[#FFB800]/5 rounded-full opacity-30" 
-          style={{ transform: 'translateZ(0)' }} 
+          style={{ 
+            transform: 'translateZ(0)',
+            willChange: 'transform',
+            backfaceVisibility: 'hidden'
+          }} 
         />
         <div 
           className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-orange-900/5 rounded-full opacity-30" 
-          style={{ transform: 'translateZ(0)' }} 
+          style={{ 
+            transform: 'translateZ(0)',
+            willChange: 'transform',
+            backfaceVisibility: 'hidden'
+          }} 
         />
         
         {/* Hero Portrait Image with Dynamic Blur - Desktop */}
-        <div className="hidden md:block absolute right-0 bottom-0 top-0 w-1/2 overflow-hidden">
+        <div 
+          className="hidden md:block absolute right-0 bottom-0 top-0 w-1/2 overflow-hidden"
+          style={{
+            transform: 'translateZ(0)',
+            willChange: 'transform, opacity',
+            backfaceVisibility: 'hidden'
+          }}
+        >
           <AnimatePresence mode="wait">
             <motion.div
               key={activeImage}
@@ -257,14 +285,13 @@ export default function HomePage() {
               }}
               style={{ 
                 transform: 'translateZ(0)',
-                filter: blurStyle
+                filter: blurStyle,
+                willChange: !isLowPerformance ? 'filter, opacity, transform' : 'transform',
+                backfaceVisibility: 'hidden'
               }}
               exit={{ opacity: 0 }}
               transition={{ duration: 1.0, ease: "linear" }}
-              className={cn(
-                "absolute inset-0",
-                !isLowPerformance && "will-change-[filter,opacity]"
-              )}
+              className="absolute inset-0"
             >
               <picture>
                 <source srcSet={`/image/${activeImage}.webp`} type="image/webp" />
@@ -365,7 +392,15 @@ export default function HomePage() {
         </header>
 
         {/* Section: Home */}
-        <section id="home" className="relative min-h-screen flex flex-col justify-center pt-20 sm:pt-24 pb-8 sm:pb-12 overflow-hidden">
+        <section 
+          id="home" 
+          className="relative min-h-screen flex flex-col justify-center pt-20 sm:pt-24 pb-8 sm:pb-12 overflow-hidden"
+          style={{
+            transform: 'translateZ(0)',
+            willChange: 'scroll-position',
+            backfaceVisibility: 'hidden'
+          }}
+        >
           {/* Фоновое фото для мобильных */}
           <div className="md:hidden absolute inset-0 z-0">
             <AnimatePresence mode="wait">
@@ -403,6 +438,11 @@ export default function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             className="relative z-10"
+            style={{
+              transform: 'translateZ(0)',
+              willChange: 'transform, opacity',
+              backfaceVisibility: 'hidden'
+            }}
           >
             <h1 className="text-5xl sm:text-7xl md:text-9xl lg:text-[12rem] xl:text-[14rem] font-black mb-12 md:mb-20 tracking-tighter leading-[0.8] uppercase flex flex-col">
               <span className="block">{t.name.split(' ')[0]}</span>
@@ -438,7 +478,11 @@ export default function HomePage() {
         </section>
 
         {/* Section: Summary */}
-        <section id="summary" className="min-h-screen flex flex-col justify-center py-16 sm:py-24 md:py-32">
+        <section 
+          id="summary" 
+          className="min-h-screen flex flex-col justify-center py-16 sm:py-24 md:py-32"
+          style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
+        >
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -464,7 +508,11 @@ export default function HomePage() {
         </section>
 
         {/* Section: Portfolio */}
-        <section id="portfolio" className="min-h-screen py-16 sm:py-24 md:py-32">
+        <section 
+          id="portfolio" 
+          className="min-h-screen py-16 sm:py-24 md:py-32"
+          style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
+        >
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -545,7 +593,11 @@ export default function HomePage() {
         </section>
 
         {/* Section: Experience */}
-        <section id="experience" className="min-h-screen py-16 sm:py-24 md:py-32">
+        <section 
+          id="experience" 
+          className="min-h-screen py-16 sm:py-24 md:py-32"
+          style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
+        >
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -599,7 +651,11 @@ export default function HomePage() {
         </section>
 
         {/* Section: Skills */}
-        <section id="skills" className="min-h-screen py-16 sm:py-24 md:py-32">
+        <section 
+          id="skills" 
+          className="min-h-screen py-16 sm:py-24 md:py-32"
+          style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
+        >
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -665,7 +721,11 @@ export default function HomePage() {
         </section>
 
         {/* Section: Contact Form */}
-        <section id="contact" className="min-h-screen flex flex-col justify-center py-16 sm:py-24 md:py-32">
+        <section 
+          id="contact" 
+          className="min-h-screen flex flex-col justify-center py-16 sm:py-24 md:py-32"
+          style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
+        >
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -679,7 +739,11 @@ export default function HomePage() {
         </section>
 
         {/* Section: Links */}
-        <section id="links" className="min-h-screen flex flex-col justify-center py-16 sm:py-24 md:py-32">
+        <section 
+          id="links" 
+          className="min-h-screen flex flex-col justify-center py-16 sm:py-24 md:py-32"
+          style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
+        >
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}

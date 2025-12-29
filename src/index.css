@@ -33,6 +33,23 @@ body {
   font-family: inherit;
 }
 
+/* Оптимизация рендеринга - принудительное GPU ускорение для ключевых элементов */
+img,
+video,
+canvas {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Оптимизация рендеринга секций вне viewport */
+section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 500px;
+  contain: layout style paint;
+}
+
 html {
   scroll-behavior: smooth;
 }

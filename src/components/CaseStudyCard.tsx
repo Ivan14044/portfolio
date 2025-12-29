@@ -153,6 +153,11 @@ const CaseStudyCard = React.memo(({ caseStudy, beforeImage, afterImage }: CaseSt
   return (
     <div
       className="group relative aspect-[4/5] bg-[#141414] rounded-2xl overflow-hidden border border-white/5 hover:border-[#FFB800]/30 transition-all duration-500 shadow-xl"
+      style={{
+        transform: 'translateZ(0)',
+        willChange: 'transform',
+        backfaceVisibility: 'hidden'
+      }}
     >
       <div
         ref={containerRef}
@@ -162,7 +167,10 @@ const CaseStudyCard = React.memo(({ caseStudy, beforeImage, afterImage }: CaseSt
         className="absolute inset-0 w-full h-full cursor-col-resize"
       >
         {/* After Image (фон, всегда внизу) */}
-        <div className="absolute inset-0">
+        <div 
+          className="absolute inset-0"
+          style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
+        >
           {afterImg ? (
             <img 
               src={afterImg} 
@@ -170,6 +178,7 @@ const CaseStudyCard = React.memo(({ caseStudy, beforeImage, afterImage }: CaseSt
               className="absolute inset-0 w-full h-full object-cover"
               loading="lazy"
               decoding="async"
+              style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-black" />
@@ -185,7 +194,9 @@ const CaseStudyCard = React.memo(({ caseStudy, beforeImage, afterImage }: CaseSt
           style={{ 
             width: `${sliderPosition}%`,
             transition: isDragging ? 'none' : 'width 0.1s ease-out',
-            transform: 'translateZ(0)'
+            transform: 'translateZ(0)',
+            willChange: isDragging ? 'width' : 'auto',
+            backfaceVisibility: 'hidden'
           }}
         >
           {beforeImg ? (
@@ -195,6 +206,7 @@ const CaseStudyCard = React.memo(({ caseStudy, beforeImage, afterImage }: CaseSt
               className="absolute inset-0 w-full h-full object-cover"
               loading="lazy"
               decoding="async"
+              style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-orange-900/20 to-black" />
