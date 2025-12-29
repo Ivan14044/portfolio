@@ -182,7 +182,7 @@ export default function HomePage() {
         <meta name="description" content={seoDescription} />
         
         {/* Preload LCP Image */}
-        <link rel="preload" as="image" href="/image/image_1.webp" fetchPriority="high" />
+        <link rel="preload" as="image" href="/image/image_1.webp" />
         
         {/* OpenGraph */}
         <meta property="og:title" content={seoTitle} />
