@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "dev:server": "node server.js",
@@ -22,21 +25,21 @@
     "express": "^5.2.1",
     "framer-motion": "^12.23.26",
     "lucide-react": "^0.562.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
     "react-helmet-async": "^2.0.5",
     "react-router-dom": "^7.11.0",
     "tailwind-merge": "^3.4.0"
   },
   "overrides": {
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@types/node": "^24.10.4",
-    "@types/react": "^19.2.5",
-    "@types/react-dom": "^19.2.3",
+    "@types/react": "19.0.0",
+    "@types/react-dom": "19.0.0",
     "@vercel/node": "^5.5.16",
     "@vitejs/plugin-react": "^5.1.1",
     "autoprefixer": "^10.4.23",
