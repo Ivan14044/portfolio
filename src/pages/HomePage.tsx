@@ -215,13 +215,7 @@ export default function HomePage() {
   const seoDescription = `Профессиональная ретушь фотографий, цветокоррекция и создание контента. Портфолио Дарьи Коваль.`;
 
   return (
-    <div 
-      className="relative min-h-screen bg-[#080808] text-white selection:bg-[#FFB800]/40 font-sans overflow-x-hidden"
-      style={{ 
-        transform: 'translateZ(0)',
-        willChange: 'scroll-position'
-      }}
-    >
+    <div className="relative min-h-screen bg-[#080808] text-white selection:bg-[#FFB800]/40 font-sans overflow-x-hidden">
       <Helmet>
         <title>{seoTitle}</title>
         <meta name="description" content={seoDescription} />
@@ -241,14 +235,7 @@ export default function HomePage() {
       </Helmet>
       
       {/* Background Effects - Упрощены для производительности */}
-      <div 
-        className="fixed inset-0 pointer-events-none z-0 overflow-hidden"
-        style={{ 
-          transform: 'translateZ(0)',
-          willChange: 'transform',
-          backfaceVisibility: 'hidden'
-        }}
-      >
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         {/* Убраны тяжелые blur эффекты для лучшей производительности на слабых ПК */}
         <div 
           className="absolute top-[15%] right-[-5%] w-[1000px] h-[1000px] bg-[#FFB800]/5 rounded-full opacity-30" 
@@ -268,13 +255,7 @@ export default function HomePage() {
         />
         
         {/* Hero Portrait Image with Dynamic Blur - Desktop */}
-        <div 
-          className="hidden md:block absolute right-0 bottom-0 top-0 w-1/2 overflow-hidden"
-          style={{
-            transform: 'translateZ(0)',
-            backfaceVisibility: 'hidden'
-          }}
-        >
+        <div className="hidden md:block absolute right-0 bottom-0 top-0 w-1/2 overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeImage}
@@ -283,7 +264,6 @@ export default function HomePage() {
                 opacity: 1
               }}
               style={{ 
-                transform: 'translateZ(0)',
                 filter: blurStyle
               }}
               exit={{ opacity: 0 }}
@@ -299,10 +279,6 @@ export default function HomePage() {
                   loading="eager"
                   decoding="async"
                   draggable={false}
-                  style={{ 
-                    transform: 'translateZ(0)',
-                    backfaceVisibility: 'hidden'
-                  }}
                 />
               </picture>
             </motion.div>
@@ -393,15 +369,7 @@ export default function HomePage() {
         </header>
 
         {/* Section: Home */}
-        <section 
-          id="home" 
-          className="relative min-h-screen flex flex-col justify-center pt-20 sm:pt-24 pb-8 sm:pb-12 overflow-hidden"
-          style={{
-            transform: 'translateZ(0)',
-            willChange: 'scroll-position',
-            backfaceVisibility: 'hidden'
-          }}
-        >
+        <section id="home" className="relative min-h-screen flex flex-col justify-center pt-20 sm:pt-24 pb-8 sm:pb-12 overflow-hidden">
           {/* Фоновое фото для мобильных */}
           <div className="md:hidden absolute inset-0 z-0">
             <AnimatePresence mode="wait">
@@ -410,7 +378,6 @@ export default function HomePage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 style={{ 
-                  transform: 'translateZ(0)',
                   filter: blurStyle
                 }}
                 exit={{ opacity: 0 }}
@@ -426,10 +393,6 @@ export default function HomePage() {
                     loading="lazy"
                     decoding="async"
                     draggable={false}
-                    style={{ 
-                      transform: 'translateZ(0)',
-                      backfaceVisibility: 'hidden'
-                    }}
                   />
                 </picture>
                 {/* Затемнение для лучшей читаемости текста */}

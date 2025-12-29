@@ -47,7 +47,7 @@ canvas {
 section {
   content-visibility: auto;
   contain-intrinsic-size: auto 500px;
-  contain: layout style paint;
+  /* Убрали contain: layout style paint - он вызывал проблемы с размерами абсолютно позиционированных элементов */
 }
 
 html {
