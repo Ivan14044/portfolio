@@ -273,7 +273,8 @@ export default function HomePage() {
           style={{
             transform: 'translateZ(0)',
             willChange: 'transform, opacity',
-            backfaceVisibility: 'hidden'
+            backfaceVisibility: 'hidden',
+            maxWidth: '50%'
           }}
         >
           <AnimatePresence mode="wait">
@@ -287,7 +288,9 @@ export default function HomePage() {
                 transform: 'translateZ(0)',
                 filter: blurStyle,
                 willChange: !isLowPerformance ? 'filter, opacity, transform' : 'transform',
-                backfaceVisibility: 'hidden'
+                backfaceVisibility: 'hidden',
+                width: '100%',
+                height: '100%'
               }}
               exit={{ opacity: 0 }}
               transition={{ duration: 1.0, ease: "linear" }}
@@ -302,6 +305,12 @@ export default function HomePage() {
                   loading="eager"
                   decoding="async"
                   draggable={false}
+                  style={{ 
+                    transform: 'translateZ(0)',
+                    backfaceVisibility: 'hidden',
+                    maxWidth: '100%',
+                    maxHeight: '100%'
+                  }}
                 />
               </picture>
             </motion.div>
@@ -425,6 +434,12 @@ export default function HomePage() {
                     loading="lazy"
                     decoding="async"
                     draggable={false}
+                    style={{ 
+                      transform: 'translateZ(0)',
+                      backfaceVisibility: 'hidden',
+                      maxWidth: '100%',
+                      maxHeight: '100%'
+                    }}
                   />
                 </picture>
                 {/* Затемнение для лучшей читаемости текста */}

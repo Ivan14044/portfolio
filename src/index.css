@@ -37,10 +37,10 @@ body {
 img,
 video,
 canvas {
-  transform: translateZ(0);
   backface-visibility: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Не добавляем transform: translateZ(0) глобально, чтобы не влиять на размеры */
 }
 
 /* Оптимизация рендеринга секций вне viewport */
