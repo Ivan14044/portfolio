@@ -64,6 +64,41 @@ const navItems = [
   { id: 'contact', label: 'Контакты', icon: Mail },
 ];
 
+// Определение производительности устройства
+const usePerformanceMode = () => {
+  const [isLowPerformance, setIsLowPerformance] = useState(() => {
+    // Проверяем сохраненное значение в localStorage
+    const saved = localStorage.getItem('performance_mode');
+    if (saved) {
+      return saved === 'low';
+    }
+    
+    // Проверяем hardwareConcurrency (количество ядер)
+    const cores = navigator.hardwareConcurrency || 4;
+    // Проверяем deviceMemory (если доступно)
+    const memory = (navigator as any).deviceMemory || 4;
+    
+    // Определяем слабое устройство: меньше 4 ядер или меньше 4GB памяти
+    return cores < 4 || memory < 4;
+  });
+  
+  useEffect(() => {
+    // Проверяем connection (если доступно) и обновляем состояние
+    const connection = (navigator as any).connection;
+    const isSlowConnection = connection && (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g');
+    
+    if (isSlowConnection) {
+      setIsLowPerformance(true);
+      localStorage.setItem('performance_mode', 'low');
+    } else {
+      // Сохраняем текущее значение
+      localStorage.setItem('performance_mode', isLowPerformance ? 'low' : 'high');
+    }
+  }, [isLowPerformance]);
+  
+  return isLowPerformance;
+};
+
 export default function HomePage() {
   const { language, setLanguage, t } = useTranslation();
   const [activeSection, setActiveSection] = useState('home');
@@ -74,12 +109,16 @@ export default function HomePage() {
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+  
+  // Определяем производительность устройства
+  const isLowPerformance = usePerformanceMode();
 
   const { scrollYProgress } = useScroll();
   
   // Оптимизированный блюр через кастомный хук с троттлингом
+  // Отключаем blur на слабых устройствах для лучшей производительности
   const blurValue = useThrottledBlur(scrollYProgress);
-  const blurStyle = blurValue > 0.1 ? `blur(${blurValue}px)` : 'none';
+  const blurStyle = (!isLowPerformance && blurValue > 0.1) ? `blur(${blurValue}px)` : 'none';
 
   useEffect(() => {
     const fetchData = async () => {
@@ -195,14 +234,15 @@ export default function HomePage() {
         <meta name="twitter:description" content={seoDescription} />
       </Helmet>
       
-      {/* Background Effects */}
+      {/* Background Effects - Упрощены для производительности */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Убраны тяжелые blur эффекты для лучшей производительности на слабых ПК */}
         <div 
-          className="absolute top-[15%] right-[-5%] w-[1000px] h-[1000px] bg-[#FFB800]/5 rounded-full blur-[120px] will-change-transform" 
+          className="absolute top-[15%] right-[-5%] w-[1000px] h-[1000px] bg-[#FFB800]/5 rounded-full opacity-30" 
           style={{ transform: 'translateZ(0)' }} 
         />
         <div 
-          className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-orange-900/5 rounded-full blur-[100px] will-change-transform" 
+          className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-orange-900/5 rounded-full opacity-30" 
           style={{ transform: 'translateZ(0)' }} 
         />
         
@@ -221,7 +261,10 @@ export default function HomePage() {
               }}
               exit={{ opacity: 0 }}
               transition={{ duration: 1.0, ease: "linear" }}
-              className="absolute inset-0 will-change-[filter,opacity]"
+              className={cn(
+                "absolute inset-0",
+                !isLowPerformance && "will-change-[filter,opacity]"
+              )}
             >
               <picture>
                 <source srcSet={`/image/${activeImage}.webp`} type="image/webp" />
@@ -406,15 +449,16 @@ export default function HomePage() {
           </motion.h2>
           <div className="space-y-8 md:space-y-12 max-w-5xl text-lg sm:text-xl md:text-2xl lg:text-3xl text-white/80 leading-snug font-medium tracking-tight">
             {t.summary.map((paragraph, i) => (
-              <motion.p 
+              <p 
                 key={i}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.15 }}
+                className={cn(
+                  "opacity-0 animate-fade-in-up",
+                  isLowPerformance && "opacity-100"
+                )}
+                style={isLowPerformance ? {} : { animationDelay: `${i * 0.1}s` }}
               >
                 {paragraph}
-              </motion.p>
+              </p>
             ))}
           </div>
         </section>
@@ -513,12 +557,13 @@ export default function HomePage() {
           
           <div className="space-y-24 md:space-y-48">
             {t.experience.map((exp, i) => (
-              <motion.div 
+              <div 
                 key={i} 
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true, margin: "-100px" }}
-                className="relative"
+                className={cn(
+                  "relative",
+                  !isLowPerformance && "opacity-0 animate-fade-in-up"
+                )}
+                style={isLowPerformance ? {} : { animationDelay: `${i * 0.1}s` }}
               >
                 <div className="flex flex-col lg:flex-row gap-12 mb-16">
                   <div className="lg:w-1/3">
@@ -539,20 +584,16 @@ export default function HomePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-8 pl-4 border-l border-white/5">
                   {exp.details.map((detail, di) => (
-                    <motion.div 
+                    <div 
                       key={di} 
-                      initial={{ opacity: 0, x: -10 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: di * 0.05 }}
                       className="flex items-start gap-3 md:gap-4 text-white/60 text-sm sm:text-base md:text-lg leading-snug group"
                     >
                       <span className="text-[#FFB800] font-black mt-[-2px] group-hover:scale-125 transition-transform">—</span>
                       <span className="group-hover:text-white/90 transition-colors">{detail}</span>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
         </section>
@@ -602,12 +643,20 @@ export default function HomePage() {
                     <span className="text-xl font-bold text-white">{lang.name}</span>
                   </div>
                   <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      whileInView={{ width: `${lang.level}%` }}
-                      transition={{ duration: 1.5, ease: "easeOut" }}
-                      className="h-full bg-[#FFB800]"
-                    />
+                    {isLowPerformance ? (
+                      <div 
+                        className="h-full bg-[#FFB800]"
+                        style={{ width: `${lang.level}%` }}
+                      />
+                    ) : (
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        whileInView={{ width: `${lang.level}%` }}
+                        viewport={{ once: true, margin: "-50px" }}
+                        transition={{ duration: 1.5, ease: "easeOut" }}
+                        className="h-full bg-[#FFB800]"
+                      />
+                    )}
                   </div>
                 </div>
               ))}
