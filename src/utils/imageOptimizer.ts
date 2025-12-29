@@ -26,6 +26,11 @@ export async function optimizeImage(file: File, options: OptimizeOptions = {}): 
   };
 
   try {
+    if (!file || file.size === 0) {
+      console.warn(`⚠️ Skipping optimization: File is empty or null (${file?.name})`);
+      return file;
+    }
+
     console.log(`🚀 Optimizing image: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
     const compressedFile = await imageCompression(file, compressionOptions);
     

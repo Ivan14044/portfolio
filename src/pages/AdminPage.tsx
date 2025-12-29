@@ -219,6 +219,10 @@ export default function AdminPage() {
       let beforeUrl = beforePreview;
       let afterUrl = afterPreview;
 
+      // Проверка на пустые файлы перед началом
+      if (beforeFile && beforeFile.size === 0) throw new Error('Файл "До" пустой или поврежден');
+      if (afterFile && afterFile.size === 0) throw new Error('Файл "После" пустой или поврежден');
+
       if (beforeFile) {
         const optimizedBefore = await optimizeImage(beforeFile);
         beforeUrl = await handleUpload(optimizedBefore, 'before');
@@ -231,9 +235,18 @@ export default function AdminPage() {
       // Загрузка дополнительных фото
       const uploadedAdditionalUrls = [];
       for (const file of additionalFiles) {
-        const optimizedExtra = await optimizeImage(file);
-        const url = await handleUpload(optimizedExtra, 'extra');
-        uploadedAdditionalUrls.push(url);
+        if (file.size === 0) {
+          console.warn(`Пропуск пустого файла: ${file.name}`);
+          continue;
+        }
+        try {
+          const optimizedExtra = await optimizeImage(file);
+          const url = await handleUpload(optimizedExtra, 'extra');
+          uploadedAdditionalUrls.push(url);
+        } catch (uploadErr) {
+          console.error(`Ошибка при загрузке ${file.name}:`, uploadErr);
+          // Продолжаем загрузку остальных, если один не удался
+        }
       }
 
       // Комбинируем новые загруженные фото с уже существующими (при редактировании)
