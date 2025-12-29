@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
-import type { DatabaseProject, SiteSettings } from '../utils/supabase';
+import type { DatabaseProject, SiteSettings, Category } from '../utils/supabase';
 import { optimizeImage } from '../utils/imageOptimizer';
-import { LogOut, Plus, Trash2, Image as ImageIcon, Check, AlertCircle, Loader2, ArrowLeft, Languages, Pencil, Database, Settings, Mail, MapPin, Instagram, Send, Phone } from 'lucide-react';
+import { LogOut, Plus, Trash2, Image as ImageIcon, Check, AlertCircle, Loader2, ArrowLeft, Languages, Pencil, Database, Settings, Mail, MapPin, Instagram, Send, Phone, FolderPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { portfolioData } from '../data';
 
@@ -14,9 +14,10 @@ export default function AdminPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [projects, setProjects] = useState<DatabaseProject[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [activeLang, setActiveLang] = useState<Lang>('uk');
-  const [adminTab, setAdminTab] = useState<'projects' | 'settings'>('projects');
+  const [adminTab, setAdminTab] = useState<'projects' | 'categories' | 'settings'>('projects');
   
   // Состояние для настроек сайта
   const [settings, setSettings] = useState<SiteSettings>({
@@ -37,11 +38,21 @@ export default function AdminPage() {
   const [newProject, setNewProject] = useState({
     title_uk: '', title_ru: '', title_en: '',
     client: '',
+    category_id: '',
     category_uk: '', category_ru: '', category_en: '',
     description_uk: '', description_ru: '', description_en: '',
     services_uk: '', services_ru: '', services_en: '',
     content_uk: '', content_ru: '', content_en: '',
   });
+
+  // Состояние для новой категории
+  const [newCategory, setNewCategory] = useState({
+    name_uk: '',
+    name_ru: '',
+    name_en: '',
+  });
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   
   const [beforeFile, setBeforeFile] = useState<File | null>(null);
   const [afterFile, setAfterFile] = useState<File | null>(null);
@@ -56,6 +67,7 @@ export default function AdminPage() {
     if (auth === 'true') {
       setIsAuthenticated(true);
       fetchProjects();
+      fetchCategories();
       fetchSettings();
     }
   }, []);
@@ -68,6 +80,7 @@ export default function AdminPage() {
       localStorage.setItem('admin_auth', 'true');
       setError('');
       fetchProjects();
+      fetchCategories();
       fetchSettings();
     } else {
       setError('Неверный пароль');
@@ -77,6 +90,19 @@ export default function AdminPage() {
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem('admin_auth');
+  };
+
+  const fetchCategories = async () => {
+    const { data, error } = await supabase
+      .from('project_categories')
+      .select('*')
+      .order('created_at', { ascending: true });
+    
+    if (error) {
+      console.error('Error fetching categories:', error);
+    } else {
+      setCategories(data || []);
+    }
   };
 
   const fetchSettings = async () => {
@@ -118,6 +144,56 @@ export default function AdminPage() {
       setError(err.message || 'Ошибка при сохранении настроек');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleCategorySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      if (editingCategoryId) {
+        const { error } = await supabase
+          .from('project_categories')
+          .update(newCategory)
+          .eq('id', editingCategoryId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('project_categories')
+          .insert([newCategory]);
+        if (error) throw error;
+      }
+      setNewCategory({ name_uk: '', name_ru: '', name_en: '' });
+      setIsAddingCategory(false);
+      setEditingCategoryId(null);
+      fetchCategories();
+    } catch (err: any) {
+      alert('Ошибка при сохранении категории: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditCategory = (category: Category) => {
+    setNewCategory({
+      name_uk: category.name_uk,
+      name_ru: category.name_ru,
+      name_en: category.name_en,
+    });
+    setEditingCategoryId(category.id);
+    setIsAddingCategory(true);
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    if (!confirm('Вы уверены? Все проекты этой категории останутся без категории.')) return;
+    const { error } = await supabase
+      .from('project_categories')
+      .delete()
+      .eq('id', id);
+    if (error) {
+      alert('Ошибка при удалении категории');
+    } else {
+      fetchCategories();
     }
   };
 
@@ -164,6 +240,7 @@ export default function AdminPage() {
       title_ru: project.title_ru || project.title || '',
       title_en: project.title_en || project.title || '',
       client: project.client || '',
+      category_id: project.category_id || '',
       category_uk: project.category_uk || project.category || '',
       category_ru: project.category_ru || project.category || '',
       category_en: project.category_en || project.category || '',
@@ -190,6 +267,7 @@ export default function AdminPage() {
     setNewProject({ 
       title_uk: '', title_ru: '', title_en: '',
       client: '',
+      category_id: '',
       category_uk: '', category_ru: '', category_en: '',
       description_uk: '', description_ru: '', description_en: '',
       services_uk: '', services_ru: '', services_en: '',
@@ -255,14 +333,18 @@ export default function AdminPage() {
         ...uploadedAdditionalUrls
       ];
 
+      // Находим выбранную категорию для сохранения текстовых полей (для обратной совместимости)
+      const selectedCategory = categories.find(c => c.id === newProject.category_id);
+
       const projectData = {
         title_uk: newProject.title_uk,
         title_ru: newProject.title_ru,
         title_en: newProject.title_en,
         client: newProject.client,
-        category_uk: newProject.category_uk,
-        category_ru: newProject.category_ru,
-        category_en: newProject.category_en,
+        category_id: newProject.category_id || null,
+        category_uk: selectedCategory?.name_uk || newProject.category_uk,
+        category_ru: selectedCategory?.name_ru || newProject.category_ru,
+        category_en: selectedCategory?.name_en || newProject.category_en,
         description_uk: newProject.description_uk,
         description_ru: newProject.description_ru,
         description_en: newProject.description_en,
@@ -422,6 +504,13 @@ export default function AdminPage() {
               Кейсы
             </button>
             <button
+              onClick={() => setAdminTab('categories')}
+              className={`px-6 py-2 rounded-lg text-xs font-bold uppercase transition-all flex items-center gap-2 ${adminTab === 'categories' ? 'bg-[#FFB800] text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
+            >
+              <FolderPlus size={14} />
+              Категории
+            </button>
+            <button
               onClick={() => setAdminTab('settings')}
               className={`px-6 py-2 rounded-lg text-xs font-bold uppercase transition-all flex items-center gap-2 ${adminTab === 'settings' ? 'bg-[#FFB800] text-black shadow-lg' : 'text-white/40 hover:text-white'}`}
             >
@@ -512,14 +601,42 @@ export default function AdminPage() {
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-white/60 flex items-center gap-2">
-                          <Languages size={14} className="text-[#FFB800]" /> Категория ({activeLang.toUpperCase()})
+                          <Languages size={14} className="text-[#FFB800]" /> Категория (выбор или текст)
                         </label>
-                        <input
-                          required
-                          value={newProject[`category_${activeLang}` as keyof typeof newProject]}
-                          onChange={e => setNewProject({...newProject, [`category_${activeLang}`]: e.target.value})}
+                        <select
+                          value={newProject.category_id}
+                          onChange={e => {
+                            const catId = e.target.value;
+                            const cat = categories.find(c => c.id === catId);
+                            setNewProject({
+                              ...newProject, 
+                              category_id: catId,
+                              category_uk: cat?.name_uk || '',
+                              category_ru: cat?.name_ru || '',
+                              category_en: cat?.name_en || ''
+                            });
+                          }}
                           className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
-                        />
+                        >
+                          <option value="" className="bg-[#141414]">-- Выберите категорию --</option>
+                          {categories.map(cat => (
+                            <option key={cat.id} value={cat.id} className="bg-[#141414]">
+                              {cat.name_ru} / {cat.name_uk}
+                            </option>
+                          ))}
+                        </select>
+                        
+                        {!newProject.category_id && (
+                          <div className="mt-2 pt-2 border-t border-white/5">
+                            <p className="text-[10px] text-white/40 mb-2 uppercase font-bold">Или введите вручную (старый метод):</p>
+                            <input
+                              value={newProject[`category_${activeLang}` as keyof typeof newProject]}
+                              onChange={e => setNewProject({...newProject, [`category_${activeLang}`]: e.target.value})}
+                              placeholder="Название категории..."
+                              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:border-[#FFB800]/50 outline-none transition-colors"
+                            />
+                          </div>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-white/60 flex items-center gap-2">
@@ -746,6 +863,108 @@ export default function AdminPage() {
                 )}
               </div>
             )}
+          </div>
+        ) : adminTab === 'categories' ? (
+          <div className="space-y-10">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-bold mb-1">Категории</h1>
+                <p className="text-white/40">Управление подкатегориями портфолио</p>
+              </div>
+              <button
+                onClick={() => setIsAddingCategory(true)}
+                className="flex items-center justify-center gap-2 bg-[#FFB800] text-black font-bold px-6 py-3 rounded-2xl hover:bg-white transition-all shadow-lg shadow-[#FFB800]/10"
+              >
+                <Plus size={20} />
+                Добавить категорию
+              </button>
+            </div>
+
+            {isAddingCategory && (
+              <div className="max-w-2xl bg-[#141414] border border-white/10 rounded-3xl p-8 shadow-2xl">
+                <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                  {editingCategoryId ? <Pencil className="text-[#FFB800]" /> : <Plus className="text-[#FFB800]" />}
+                  {editingCategoryId ? 'Редактировать категорию' : 'Новая категория'}
+                </h2>
+                <form onSubmit={handleCategorySubmit} className="space-y-6">
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-white/60 uppercase tracking-widest">Название (UK)</label>
+                      <input
+                        required
+                        value={newCategory.name_uk}
+                        onChange={e => setNewCategory({...newCategory, name_uk: e.target.value})}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-white/60 uppercase tracking-widest">Название (RU)</label>
+                      <input
+                        required
+                        value={newCategory.name_ru}
+                        onChange={e => setNewCategory({...newCategory, name_ru: e.target.value})}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-white/60 uppercase tracking-widest">Название (EN)</label>
+                      <input
+                        required
+                        value={newCategory.name_en}
+                        onChange={e => setNewCategory({...newCategory, name_en: e.target.value})}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-[#FFB800]/50 outline-none transition-colors"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-4">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="flex-1 bg-white text-black font-black py-4 rounded-xl hover:bg-[#FFB800] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {loading ? <Loader2 className="animate-spin" /> : <Check size={20} />}
+                      {editingCategoryId ? 'ОБНОВИТЬ' : 'СОЗДАТЬ'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddingCategory(false);
+                        setEditingCategoryId(null);
+                        setNewCategory({ name_uk: '', name_ru: '', name_en: '' });
+                      }}
+                      className="px-6 py-4 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white transition-all"
+                    >
+                      Отмена
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {categories.map(cat => (
+                <div key={cat.id} className="bg-[#141414] border border-white/10 rounded-2xl p-6 flex flex-col gap-4">
+                  <div>
+                    <h3 className="text-lg font-bold">{cat.name_ru}</h3>
+                    <p className="text-white/40 text-xs mt-1 italic">{cat.name_uk} / {cat.name_en}</p>
+                  </div>
+                  <div className="mt-auto flex gap-2">
+                    <button
+                      onClick={() => handleEditCategory(cat)}
+                      className="p-2 rounded-lg bg-white/5 hover:bg-[#FFB800] hover:text-black transition-all"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteCategory(cat.id)}
+                      className="p-2 rounded-lg bg-white/5 hover:bg-red-500 transition-all"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <div className="max-w-4xl">

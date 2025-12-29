@@ -10,9 +10,20 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // Инициализация клиента Supabase
 export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '');
 
+// Тип для категории проекта
+export interface Category {
+  id: string;
+  name_uk: string;
+  name_ru: string;
+  name_en: string;
+  created_at?: string;
+}
+
 // Тип для проекта из базы данных
 export interface DatabaseProject {
   id: string;
+  category_id?: string; // Связь с таблицей категорий
+  
   // Старые поля (для совместимости, пока не удаляем)
   title?: string;
   client: string;
@@ -59,4 +70,3 @@ export interface SiteSettings {
   phone: string;
   updated_at?: string;
 }
-

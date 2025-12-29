@@ -13,7 +13,8 @@ import {
   Send,
   Loader2,
   Globe, 
-  ChevronDown
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import { portfolioData } from '../data';
 import { clsx, type ClassValue } from 'clsx';
@@ -25,7 +26,7 @@ import ContactForm from '../components/ContactForm';
 import CaseStudyCard from '../components/CaseStudyCard';
 import type { CaseStudy } from '../components/CaseStudyCard';
 import { supabase } from '../utils/supabase';
-import type { DatabaseProject, SiteSettings } from '../utils/supabase';
+import type { DatabaseProject, SiteSettings, Category } from '../utils/supabase';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -45,8 +46,10 @@ export default function HomePage() {
   const [activeImage, setActiveImage] = useState('image_1');
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const [projects, setProjects] = useState<DatabaseProject[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
   const { scrollYProgress } = useScroll();
   
@@ -57,19 +60,15 @@ export default function HomePage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data: projectsData } = await supabase
-          .from('projects')
-          .select('*')
-          .order('created_at', { ascending: false });
+        const [projectsRes, categoriesRes, settingsRes] = await Promise.all([
+          supabase.from('projects').select('*').order('created_at', { ascending: false }),
+          supabase.from('project_categories').select('*').order('created_at', { ascending: true }),
+          supabase.from('site_settings').select('*').single()
+        ]);
         
-        if (projectsData) setProjects(projectsData);
-
-        const { data: settingsData } = await supabase
-          .from('site_settings')
-          .select('*')
-          .single();
-        
-        if (settingsData) setSettings(settingsData);
+        if (projectsRes.data) setProjects(projectsRes.data);
+        if (categoriesRes.data) setCategories(categoriesRes.data);
+        if (settingsRes.data) setSettings(settingsRes.data);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -86,18 +85,34 @@ export default function HomePage() {
     return en;
   };
 
-  const displayProjects: CaseStudy[] = useMemo(() => {
-    return projects.map(p => ({
-      id: p.id,
-      title: getLocalizedField(p.title_uk, p.title_ru, p.title_en),
-      client: p.client,
-      category: getLocalizedField(p.category_uk, p.category_ru, p.category_en),
-      description: getLocalizedField(p.description_uk, p.description_ru, p.description_en),
-      services: language === 'uk' ? p.services_uk : language === 'ru' ? p.services_ru : p.services_en,
-      beforeImage: p.before_image,
-      afterImage: p.after_image
-    }));
+  // Группировка проектов по категориям
+  const categorizedProjects = useMemo(() => {
+    const groups: Record<string, CaseStudy[]> = {};
+    
+    projects.forEach(p => {
+      const catId = p.category_id || 'uncategorized';
+      if (!groups[catId]) groups[catId] = [];
+      
+      groups[catId].push({
+        id: p.id,
+        title: getLocalizedField(p.title_uk, p.title_ru, p.title_en),
+        client: p.client,
+        category: getLocalizedField(p.category_uk, p.category_ru, p.category_en),
+        description: getLocalizedField(p.description_uk, p.description_ru, p.description_en),
+        services: language === 'uk' ? p.services_uk : language === 'ru' ? p.services_ru : p.services_en,
+        beforeImage: p.before_image,
+        afterImage: p.after_image
+      });
+    });
+    
+    return groups;
   }, [projects, language]);
+
+  const toggleCategory = (catId: string) => {
+    setExpandedCategories(prev => 
+      prev.includes(catId) ? prev.filter(id => id !== catId) : [...prev, catId]
+    );
+  };
 
   // Observer for active section and background image change
   useEffect(() => {
@@ -385,22 +400,74 @@ export default function HomePage() {
             {t.sections.portfolio || t.sections.caseStudies || 'Портфолио'}
           </motion.h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {isLoadingProjects ? (
-              <div className="col-span-full py-20 flex flex-col items-center justify-center text-white/20">
-                <Loader2 className="animate-spin mb-4" size={40} />
-                <p>Загрузка проектов...</p>
-              </div>
-            ) : (
-              displayProjects.map((caseStudy, cj) => (
-                <div key={caseStudy.id || cj}>
-                  <CaseStudyCard 
-                    caseStudy={caseStudy}
-                  />
+          {isLoadingProjects ? (
+            <div className="py-20 flex flex-col items-center justify-center text-white/20">
+              <Loader2 className="animate-spin mb-4" size={40} />
+              <p>Загрузка проектов...</p>
+            </div>
+          ) : (
+            <div className="space-y-32">
+              {/* Рендерим каждую категорию */}
+              {categories.map((category) => {
+                const projectsInCategory = categorizedProjects[category.id] || [];
+                if (projectsInCategory.length === 0) return null;
+                
+                const isExpanded = expandedCategories.includes(category.id);
+                const displayedProjects = isExpanded ? projectsInCategory : projectsInCategory.slice(0, 3);
+                
+                return (
+                  <div key={category.id} className="space-y-12">
+                    <div className="flex items-baseline gap-6">
+                      <h3 className="text-2xl sm:text-3xl md:text-4xl font-black uppercase tracking-tight text-white/90">
+                        {getLocalizedField(category.name_uk, category.name_ru, category.name_en)}
+                      </h3>
+                      <div className="h-[1px] flex-1 bg-white/5" />
+                      <span className="text-xs font-mono text-[#FFB800]/50">{projectsInCategory.length} PROJECTS</span>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                      {displayedProjects.map((caseStudy) => (
+                        <div key={caseStudy.id}>
+                          <CaseStudyCard caseStudy={caseStudy} />
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {projectsInCategory.length > 3 && (
+                      <div className="flex justify-center pt-8">
+                        <button
+                          onClick={() => toggleCategory(category.id)}
+                          className="group flex items-center gap-3 bg-white/5 border border-white/10 px-8 py-4 rounded-2xl hover:bg-[#FFB800] hover:text-black transition-all duration-500 font-bold uppercase text-xs tracking-widest"
+                        >
+                          {isExpanded ? 'Свернуть' : `Показать еще (${projectsInCategory.length - 3})`}
+                          <ChevronRight className={cn("w-4 h-4 transition-transform duration-500", isExpanded && "rotate-90")} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              
+              {/* Проекты без категории (старые или системные) */}
+              {categorizedProjects['uncategorized'] && categorizedProjects['uncategorized'].length > 0 && (
+                <div className="space-y-12">
+                  <div className="flex items-baseline gap-6">
+                    <h3 className="text-2xl sm:text-3xl md:text-4xl font-black uppercase tracking-tight text-white/90">
+                      {language === 'ru' ? 'Другие работы' : language === 'uk' ? 'Інші роботи' : 'Other Works'}
+                    </h3>
+                    <div className="h-[1px] flex-1 bg-white/5" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                    {categorizedProjects['uncategorized'].map((caseStudy) => (
+                      <div key={caseStudy.id}>
+                        <CaseStudyCard caseStudy={caseStudy} />
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </section>
 
         {/* Section: Experience */}
