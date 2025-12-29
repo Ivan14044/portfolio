@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Send, Instagram, MessageCircle, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useTranslation } from '../contexts/TranslationContext';
@@ -24,7 +24,7 @@ interface FormErrors {
   message?: string;
 }
 
-export default function ContactForm() {
+const ContactForm = React.memo(() => {
   const { t } = useTranslation();
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -36,7 +36,7 @@ export default function ContactForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
-  const validate = (): boolean => {
+  const validate = useCallback((): boolean => {
     const newErrors: FormErrors = {};
 
     // Валидация имени
@@ -78,7 +78,7 @@ export default function ContactForm() {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [formData, t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,13 +124,13 @@ export default function ContactForm() {
     }
   };
 
-  const handleChange = (field: keyof FormData, value: string) => {
+  const handleChange = useCallback((field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     // Очищаем ошибку при изменении поля
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
-  };
+  }, [errors]);
 
   return (
     <motion.form
@@ -334,5 +334,7 @@ export default function ContactForm() {
       </motion.button>
     </motion.form>
   );
-}
+});
+
+export default ContactForm;
 

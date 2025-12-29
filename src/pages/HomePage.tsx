@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { 
   Mail, 
@@ -32,6 +32,30 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Кастомный хук для плавного и оптимизированного blur эффекта
+const useThrottledBlur = (scrollYProgress: MotionValue<number>) => {
+  const [blurValue, setBlurValue] = useState(0);
+  
+  useEffect(() => {
+    let rafId: number;
+    const unsubscribe = scrollYProgress.on('change', (latest) => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        // Уменьшаем интенсивность блюра для производительности (макс 6px вместо 8px)
+        const blur = Math.min(6, latest * 20); 
+        setBlurValue(blur);
+      });
+    });
+    
+    return () => {
+      unsubscribe();
+      cancelAnimationFrame(rafId);
+    };
+  }, [scrollYProgress]);
+  
+  return blurValue;
+};
+
 const navItems = [
   { id: 'home', label: 'Главная', icon: Home },
   { id: 'summary', label: 'Обо мне', icon: User },
@@ -53,9 +77,9 @@ export default function HomePage() {
 
   const { scrollYProgress } = useScroll();
   
-  // Динамический блюр в зависимости от прокрутки
-  const blurValue = useTransform(scrollYProgress, [0, 0.1, 0.2, 0.3], [0, 4, 8, 12]);
-  const blurStyle = useTransform(blurValue, (v) => `blur(${v}px)`);
+  // Оптимизированный блюр через кастомный хук с троттлингом
+  const blurValue = useThrottledBlur(scrollYProgress);
+  const blurStyle = blurValue > 0.1 ? `blur(${blurValue}px)` : 'none';
 
   useEffect(() => {
     const fetchData = async () => {
@@ -79,11 +103,11 @@ export default function HomePage() {
     fetchData();
   }, []);
 
-  const getLocalizedField = (uk: string, ru: string, en: string) => {
+  const getLocalizedField = useCallback((uk: string, ru: string, en: string) => {
     if (language === 'uk') return uk;
     if (language === 'ru') return ru;
     return en;
-  };
+  }, [language]);
 
   // Группировка проектов по категориям
   const categorizedProjects = useMemo(() => {
@@ -108,33 +132,35 @@ export default function HomePage() {
     return groups;
   }, [projects, language]);
 
-  const toggleCategory = (catId: string) => {
+  const toggleCategory = useCallback((catId: string) => {
     setExpandedCategories(prev => 
       prev.includes(catId) ? prev.filter(id => id !== catId) : [...prev, catId]
     );
-  };
+  }, []);
 
-  // Observer for active section and background image change
+  // Оптимизированный IntersectionObserver для отслеживания активной секции
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const sectionId = entry.target.id;
-            setActiveSection(sectionId);
-            
-            // Смена фонового изображения в зависимости от секции
-            if (sectionId === 'home') {
-              setActiveImage('image_1');
-            } else if (sectionId === 'summary') {
-              setActiveImage('image_2');
-            } else if (['portfolio', 'experience', 'skills', 'contact', 'links'].includes(sectionId)) {
-              setActiveImage('image_3');
-            }
+        const intersectingEntry = entries.find(entry => entry.isIntersecting);
+        if (intersectingEntry) {
+          const sectionId = intersectingEntry.target.id;
+          setActiveSection(sectionId);
+          
+          // Смена фонового изображения
+          if (sectionId === 'home') {
+            setActiveImage('image_1');
+          } else if (sectionId === 'summary') {
+            setActiveImage('image_2');
+          } else if (['portfolio', 'experience', 'skills', 'contact', 'links'].includes(sectionId)) {
+            setActiveImage('image_3');
           }
-        });
+        }
       },
-      { threshold: 0.2 }
+      { 
+        threshold: 0.2,
+        rootMargin: '-10% 0px -10% 0px' // Оптимизируем область срабатывания
+      }
     );
 
     const sections = ['home', 'summary', 'portfolio', 'experience', 'skills', 'contact', 'links'];
@@ -156,7 +182,7 @@ export default function HomePage() {
         <meta name="description" content={seoDescription} />
         
         {/* Preload LCP Image */}
-        <link rel="preload" as="image" href="/image/image_1.webp" fetchpriority="high" />
+        <link rel="preload" as="image" href="/image/image_1.webp" fetchPriority="high" />
         
         {/* OpenGraph */}
         <meta property="og:title" content={seoTitle} />
@@ -194,7 +220,7 @@ export default function HomePage() {
                 filter: blurStyle
               }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 1.5, ease: "linear" }}
+              transition={{ duration: 1.0, ease: "linear" }}
               className="absolute inset-0 will-change-[filter,opacity]"
             >
               <picture>
@@ -204,7 +230,7 @@ export default function HomePage() {
                   alt="Portrait" 
                   className="w-full h-full object-cover object-right-center"
                   loading="eager"
-                  decoding="sync"
+                  decoding="async"
                   draggable={false}
                 />
               </picture>
@@ -221,7 +247,7 @@ export default function HomePage() {
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-3 bg-black/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/5 pointer-events-auto"
+            className="flex items-center gap-3 bg-black/40 backdrop-blur-[4px] px-4 py-2 rounded-full border border-white/5 pointer-events-auto"
           >
             <div className="w-2.5 h-2.5 bg-[#4ADE80] rounded-full shadow-[0_0_12px_#4ADE80]" />
             <span className="text-[10px] font-black uppercase tracking-[0.3em]">{t.status}</span>
@@ -235,11 +261,11 @@ export default function HomePage() {
               onClick={() => setIsLanguageMenuOpen(!isLanguageMenuOpen)}
               aria-label="Сменить язык"
               aria-expanded={isLanguageMenuOpen}
-              className="flex items-center gap-2 bg-white/10 backdrop-blur-2xl border border-white/20 px-4 py-2 rounded-full transition-all duration-300 hover:bg-white/15"
+              className="flex items-center gap-2 bg-white/10 backdrop-blur-[4px] border border-white/20 px-4 py-2 rounded-full transition-all duration-300 hover:bg-white/15"
               style={{
                 background: 'rgba(255, 255, 255, 0.08)',
-                backdropFilter: 'blur(20px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                backdropFilter: 'blur(4px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(4px) saturate(180%)',
                 boxShadow: '0 4px 16px 0 rgba(0, 0, 0, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)'
               }}
             >
@@ -258,11 +284,11 @@ export default function HomePage() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -10, scale: 0.95 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute top-full right-0 mt-2 min-w-[140px] bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]"
+                  className="absolute top-full right-0 mt-2 min-w-[140px] bg-white/10 backdrop-blur-[4px] border border-white/20 rounded-2xl overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]"
                   style={{
                     background: 'rgba(255, 255, 255, 0.08)',
-                    backdropFilter: 'blur(20px) saturate(180%)',
-                    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                    backdropFilter: 'blur(4px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(4px) saturate(180%)',
                     boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)'
                   }}
                 >
@@ -318,7 +344,8 @@ export default function HomePage() {
                     src={`/image/${activeImage}.webp`} 
                     alt="Portrait" 
                     className="w-full h-full object-cover object-center"
-                    loading="eager"
+                    loading="lazy"
+                    decoding="async"
                     draggable={false}
                   />
                 </picture>
@@ -370,9 +397,9 @@ export default function HomePage() {
         {/* Section: Summary */}
         <section id="summary" className="min-h-screen flex flex-col justify-center py-16 sm:py-24 md:py-32">
           <motion.h2 
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-50px" }}
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-[#FFB800] mb-12 md:mb-20 uppercase tracking-tight"
           >
             {t.sections.summary}
@@ -395,9 +422,9 @@ export default function HomePage() {
         {/* Section: Portfolio */}
         <section id="portfolio" className="min-h-screen py-16 sm:py-24 md:py-32">
           <motion.h2 
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-50px" }}
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-[#FFB800] mb-16 md:mb-32 uppercase tracking-tight"
           >
             {t.sections.portfolio || t.sections.caseStudies || 'Портфолио'}
@@ -476,9 +503,9 @@ export default function HomePage() {
         {/* Section: Experience */}
         <section id="experience" className="min-h-screen py-16 sm:py-24 md:py-32">
           <motion.h2 
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-50px" }}
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-[#FFB800] mb-16 md:mb-32 uppercase tracking-tight"
           >
             {t.sections.experience}
@@ -533,9 +560,9 @@ export default function HomePage() {
         {/* Section: Skills */}
         <section id="skills" className="min-h-screen py-16 sm:py-24 md:py-32">
           <motion.h2 
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-50px" }}
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-[#FFB800] mb-16 md:mb-32 uppercase tracking-tight"
           >
             {t.sections.skills}
@@ -591,9 +618,9 @@ export default function HomePage() {
         {/* Section: Contact Form */}
         <section id="contact" className="min-h-screen flex flex-col justify-center py-16 sm:py-24 md:py-32">
           <motion.h2 
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-50px" }}
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-[#FFB800] mb-12 md:mb-24 uppercase tracking-tighter"
           >
             {t.sections.contact}
@@ -605,9 +632,9 @@ export default function HomePage() {
         {/* Section: Links */}
         <section id="links" className="min-h-screen flex flex-col justify-center py-16 sm:py-24 md:py-32">
           <motion.h2 
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-50px" }}
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-[#FFB800] mb-12 md:mb-24 uppercase tracking-tighter"
           >
             {t.sections.links}
@@ -675,11 +702,11 @@ export default function HomePage() {
           initial={{ y: 100, opacity: 0, scale: 0.8 }}
           animate={{ y: 0, opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.5 }}
-          className="bg-white/10 backdrop-blur-2xl border border-white/20 p-1.5 md:p-2 rounded-full flex items-center gap-1 md:gap-1.5 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]"
+          className="bg-white/10 backdrop-blur-[4px] border border-white/20 p-1.5 md:p-2 rounded-full flex items-center gap-1 md:gap-1.5 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]"
           style={{
             background: 'rgba(255, 255, 255, 0.08)',
-            backdropFilter: 'blur(20px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            backdropFilter: 'blur(4px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(4px) saturate(180%)',
             boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)'
           }}
         >
@@ -697,30 +724,30 @@ export default function HomePage() {
 }
 
 // Компонент навигационного элемента с tooltip
-function NavItemWithTooltip({ 
+const NavItemWithTooltip = React.memo(({ 
   item, 
   activeSection 
 }: { 
   item: { id: string; label: string; icon: any }; 
   activeSection: string;
-}) {
+}) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [longPressTimer, setLongPressTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const isActive = activeSection === item.id;
 
-  const handleTouchStart = () => {
+  const handleTouchStart = useCallback(() => {
     const timer = setTimeout(() => {
       setShowTooltip(true);
     }, 500); // Долгое нажатие 500ms
     setLongPressTimer(timer);
-  };
+  }, []);
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = useCallback(() => {
     if (longPressTimer) {
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
     }
-  };
+  }, [longPressTimer]);
 
   // Скрываем tooltip автоматически через 2 секунды после показа
   useEffect(() => {
@@ -794,9 +821,9 @@ function NavItemWithTooltip({
       )}
     </motion.div>
   );
-}
+});
 
-function ContactItem({ icon: Icon, text, link }: { icon: any, text: string, link?: string }) {
+const ContactItem = React.memo(({ icon: Icon, text, link }: { icon: any, text: string, link?: string }) => {
   const content = (
     <div className="flex items-center gap-6 group cursor-pointer w-fit">
       <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-[#FFB800] group-hover:text-black transition-all duration-500 group-hover:rotate-12">
@@ -817,9 +844,9 @@ function ContactItem({ icon: Icon, text, link }: { icon: any, text: string, link
   }
 
   return content;
-}
+});
 
-function ToolIcon({ name, logo }: { name: string, logo?: string }) {
+const ToolIcon = React.memo(({ name, logo }: { name: string, logo?: string }) => {
   const [imageError, setImageError] = useState(false);
   
   return (
@@ -851,9 +878,9 @@ function ToolIcon({ name, logo }: { name: string, logo?: string }) {
       <span className="text-xs font-medium text-white/40 group-hover:text-white/60 transition-colors duration-300">{name}</span>
     </div>
   );
-}
+});
 
-function SocialLink({ name, url }: { name: string, url: string }) {
+const SocialLink = React.memo(({ name, url }: { name: string, url: string }) => {
   const icons: any = { LinkedIn: Linkedin, Instagram, X: Instagram, Behance: Instagram, Telegram: Send, Pinterest: Instagram };
   const Icon = icons[name] || Instagram;
   
@@ -880,4 +907,4 @@ function SocialLink({ name, url }: { name: string, url: string }) {
       <Icon className="w-8 h-8 transition-transform duration-500 group-hover:scale-110" />
     </motion.a>
   );
-}
+});

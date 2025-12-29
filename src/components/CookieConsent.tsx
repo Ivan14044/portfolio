@@ -118,11 +118,11 @@ export default function CookieConsent() {
           className="fixed bottom-0 left-0 right-0 z-[100] p-4 md:p-6"
         >
           <div
-            className="mx-auto max-w-4xl rounded-2xl p-6 md:p-8 backdrop-blur-2xl border border-white/10 shadow-xl"
+            className="mx-auto max-w-4xl rounded-2xl p-6 md:p-8 backdrop-blur-md border border-white/10 shadow-xl"
             style={{
               background: 'rgba(8, 8, 8, 0.85)',
-              backdropFilter: 'blur(30px) saturate(180%)',
-              WebkitBackdropFilter: 'blur(30px) saturate(180%)',
+              backdropFilter: 'blur(12px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(12px) saturate(180%)',
               boxShadow: '0 20px 60px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
             }}
           >

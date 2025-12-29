@@ -35,3 +35,4 @@ git push -u origin main
 После того как код будет в GitHub, переходите к деплою на Vercel (см. DEPLOY_INSTRUCTIONS.md)
 
 
+

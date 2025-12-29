@@ -1,7 +1,13 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from '../contexts/TranslationContext';
 import { Maximize2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 export interface CaseStudy {
   id?: string;
@@ -20,11 +26,12 @@ interface CaseStudyCardProps {
   afterImage?: string;
 }
 
-export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: CaseStudyCardProps) {
+const CaseStudyCard = React.memo(({ caseStudy, beforeImage, afterImage }: CaseStudyCardProps) => {
   const { t } = useTranslation();
   const [sliderPosition, setSliderPosition] = useState(50); // Начальная позиция 50%
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
 
   // Используем переданные изображения или из caseStudy, или заглушки
   const beforeImg = beforeImage || caseStudy.beforeImage || `/image/image_1.webp`;
@@ -44,71 +51,69 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
     return () => {
       document.body.style.overflow = '';
       document.body.style.touchAction = '';
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, [isDragging]);
 
-  // Обработка позиции слайдера (оптимизированная версия)
-  const updatePosition = (clientX: number, skipAnimation = false) => {
+  // Обработка позиции слайдера (оптимизированная версия через RAF)
+  const updatePosition = useCallback((clientX: number) => {
     if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const percentage = ((clientX - rect.left) / rect.width) * 100;
-    const clampedPercentage = Math.max(0, Math.min(100, percentage));
     
-    if (skipAnimation || isDragging) {
-      // Во время перетаскивания обновляем напрямую для максимальной отзывчивости
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    
+    rafRef.current = requestAnimationFrame(() => {
+      const rect = containerRef.current!.getBoundingClientRect();
+      const percentage = ((clientX - rect.left) / rect.width) * 100;
+      const clampedPercentage = Math.max(0, Math.min(100, percentage));
       setSliderPosition(clampedPercentage);
-    } else {
-      setSliderPosition(clampedPercentage);
-    }
-  };
+    });
+  }, []);
 
   // Обработчики мыши
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     setIsDragging(true);
     updatePosition(e.clientX);
-  };
+  }, [updatePosition]);
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isDragging) return;
     e.preventDefault();
     updatePosition(e.clientX);
-  };
+  }, [isDragging, updatePosition]);
 
 
   // Обработчики touch для мобильных
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
     setIsDragging(true);
     updatePosition(e.touches[0].clientX);
-  };
+  }, [updatePosition]);
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    e.preventDefault();
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (isDragging) {
+      // Не вызываем preventDefault здесь, если хотим оставить системный скролл, 
+      // но так как мы блокируем его в useEffect, это безопасно
       updatePosition(e.touches[0].clientX);
     }
-  };
+  }, [isDragging, updatePosition]);
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = useCallback(() => {
     setIsDragging(false);
-  };
+  }, []);
 
   // Клик по карточке для установки позиции
-  const handleContainerClick = (e: React.MouseEvent) => {
+  const handleContainerClick = useCallback((e: React.MouseEvent) => {
     if (!isDragging) {
       updatePosition(e.clientX);
     }
-  };
+  }, [isDragging, updatePosition]);
 
   // Глобальные обработчики для перетаскивания вне карточки
   useEffect(() => {
     if (!isDragging) return;
 
     const handleGlobalMouseMove = (e: MouseEvent) => {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const percentage = ((e.clientX - rect.left) / rect.width) * 100;
-      setSliderPosition(Math.max(0, Math.min(100, percentage)));
+      updatePosition(e.clientX);
     };
 
     const handleGlobalMouseUp = () => {
@@ -122,18 +127,14 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
       document.removeEventListener('mousemove', handleGlobalMouseMove);
       document.removeEventListener('mouseup', handleGlobalMouseUp);
     };
-  }, [isDragging]);
+  }, [isDragging, updatePosition]);
 
   useEffect(() => {
     if (!isDragging) return;
 
     const handleGlobalTouchMove = (e: TouchEvent) => {
-      if (!containerRef.current || e.touches.length === 0) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const percentage = ((e.touches[0].clientX - rect.left) / rect.width) * 100;
-      const clampedPercentage = Math.max(0, Math.min(100, percentage));
-      // Обновляем напрямую без requestAnimationFrame для максимальной отзывчивости
-      setSliderPosition(clampedPercentage);
+      if (e.touches.length === 0) return;
+      updatePosition(e.touches[0].clientX);
     };
 
     const handleGlobalTouchEnd = () => {
@@ -147,7 +148,7 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
       document.removeEventListener('touchmove', handleGlobalTouchMove);
       document.removeEventListener('touchend', handleGlobalTouchEnd);
     };
-  }, [isDragging]);
+  }, [isDragging, updatePosition]);
 
   return (
     <div
@@ -177,7 +178,10 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
 
         {/* Before Image (верхний слой, обрезается по позиции слайдера) */}
         <div 
-          className="absolute inset-0 overflow-hidden z-10 will-change-[clip-path]"
+          className={cn(
+            "absolute inset-0 overflow-hidden z-10",
+            isDragging && "will-change-[clip-path]"
+          )}
           style={{ 
             clipPath: `inset(0 ${100 - sliderPosition}% 0 0)`,
             transition: isDragging ? 'none' : 'clip-path 0.1s ease-out',
@@ -199,9 +203,13 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
 
         {/* Разделительная линия */}
         <div
-          className="absolute top-0 bottom-0 w-0.5 bg-white/90 shadow-lg z-30"
+          className={cn(
+            "absolute top-0 bottom-0 w-0.5 bg-white/90 shadow-lg z-30",
+            isDragging && "will-change-[left]"
+          )}
           style={{ left: `${sliderPosition}%`, transition: isDragging ? 'none' : 'left 0.1s ease-out' }}
         >
+
           {/* Индикатор на линии (круг с стрелками) */}
           <div
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/95 backdrop-blur-sm border-2 border-[#FFB800] shadow-xl flex items-center justify-center cursor-grab active:cursor-grabbing"
@@ -287,4 +295,10 @@ export default function CaseStudyCard({ caseStudy, beforeImage, afterImage }: Ca
       </div>
     </div>
   );
-}
+}, (prev, next) => {
+  return prev.caseStudy.id === next.caseStudy.id && 
+         prev.beforeImage === next.beforeImage && 
+         prev.afterImage === next.afterImage;
+});
+
+export default CaseStudyCard;
