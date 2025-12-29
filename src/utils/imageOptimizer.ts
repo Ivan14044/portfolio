@@ -51,3 +51,4 @@ export async function optimizeImages(files: File[], options: OptimizeOptions = {
   return Promise.all(files.map(file => optimizeImage(file, options)));
 }
 
+
