@@ -6,6 +6,7 @@ import ProjectPage from './pages/ProjectPage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import CookiePolicy from './pages/CookiePolicy';
+import ThankYouPage from './pages/ThankYouPage';
 import ScrollToTop from './components/ScrollToTop';
 import CookieConsent from './components/CookieConsent';
 
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/cookies" element={<CookiePolicy />} />
+        <Route path="/thank-you" element={<ThankYouPage />} />
       </Routes>
       <CookieConsent />
     </HelmetProvider>

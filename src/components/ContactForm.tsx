@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Send, Instagram, MessageCircle, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useTranslation } from '../contexts/TranslationContext';
+import { useNavigate } from 'react-router-dom';
 import { sendContactForm } from '../utils/api';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -26,6 +27,7 @@ interface FormErrors {
 
 const ContactForm = React.memo(() => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>({
     name: '',
     platform: '',
@@ -107,10 +109,10 @@ const ContactForm = React.memo(() => {
       });
       setErrors({});
 
-      // Сброс статуса через 5 секунд
+      // Редирект на страницу благодарности через 1.5 секунды
       setTimeout(() => {
-        setSubmitStatus('idle');
-      }, 5000);
+        navigate('/thank-you');
+      }, 1500);
     } catch (error) {
       console.error('Error submitting form:', error);
       setSubmitStatus('error');
