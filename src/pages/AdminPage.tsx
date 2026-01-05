@@ -88,8 +88,16 @@ export default function AdminPage() {
   };
 
   const handleLogout = () => {
+    // Очищаем аутентификацию
     setIsAuthenticated(false);
     localStorage.removeItem('admin_auth');
+    
+    // Очищаем пароль и ошибки из состояния
+    setPassword('');
+    setError('');
+    
+    // НЕ делаем никаких HTTP запросов к /logout
+    // Просто меняем состояние - форма входа покажется автоматически
   };
 
   const fetchCategories = async () => {
