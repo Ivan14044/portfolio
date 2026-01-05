@@ -101,6 +101,7 @@ const ContactForm = React.memo(() => {
       });
 
       setSubmitStatus('success');
+      console.log('Form submitted successfully, preparing redirect...');
       setFormData({
         name: '',
         platform: '',
@@ -111,11 +112,12 @@ const ContactForm = React.memo(() => {
 
       // Редирект на страницу благодарности через 1 секунду
       setTimeout(() => {
+        console.log('Redirecting to /thank-you...');
         try {
           navigate('/thank-you', { replace: true });
         } catch (navError) {
           // Если navigate не сработал, используем window.location
-          console.error('Navigation error:', navError);
+          console.error('Navigation error, using fallback:', navError);
           window.location.href = '/thank-you';
         }
       }, 1000);
