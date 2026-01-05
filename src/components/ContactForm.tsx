@@ -109,10 +109,16 @@ const ContactForm = React.memo(() => {
       });
       setErrors({});
 
-      // Редирект на страницу благодарности через 1.5 секунды
+      // Редирект на страницу благодарности через 1 секунду
       setTimeout(() => {
-        navigate('/thank-you');
-      }, 1500);
+        try {
+          navigate('/thank-you', { replace: true });
+        } catch (navError) {
+          // Если navigate не сработал, используем window.location
+          console.error('Navigation error:', navError);
+          window.location.href = '/thank-you';
+        }
+      }, 1000);
     } catch (error) {
       console.error('Error submitting form:', error);
       setSubmitStatus('error');

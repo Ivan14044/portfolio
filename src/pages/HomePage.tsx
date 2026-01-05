@@ -692,7 +692,6 @@ export default function HomePage() {
         <section 
           id="contact" 
           className="min-h-screen flex flex-col justify-center py-16 sm:py-24 md:py-32"
-          style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
         >
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
